@@ -174,6 +174,39 @@
   .dc-anchor .dc-lab{flex:0 0 auto;}
   .dc-note{font-size:11px;color:var(--muted);line-height:1.5;margin:11px 0 0;}
   .dc-note b{color:var(--paper);}
+  /* now happening / up next */
+  .agenda{display:grid;grid-template-columns:1.12fr 1fr 1fr;gap:12px;align-items:start;}
+  @media (max-width:900px){.agenda{grid-template-columns:1fr;}}
+  .ag{background:var(--ink-2);border:1px solid var(--rail);border-radius:12px;padding:14px 15px;transition:background .25s;}
+  .ag-h{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .ag-h .carrier{letter-spacing:.06em;color:var(--chrome);}
+  .ag-hero{display:flex;align-items:flex-start;gap:9px;margin:0 0 4px;}
+  .ag-where{font-size:15px;font-weight:700;line-height:1.25;margin:0;}
+  .ag-stamp{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--chrome);margin:0;}
+  .ag-rows{margin:11px 0 0;}
+  .ag-row{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--rail);
+    font-size:12.5px;line-height:1.42;}
+  .ag-row .k{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);padding-top:2px;}
+  .ag-row .v{color:var(--paper);}
+  .ag-row .v em{font-style:normal;color:var(--muted);}
+  .ag-list,.ag-tips{list-style:none;margin:0;padding:0;}
+  .ag-item{display:grid;grid-template-columns:9px 54px 1fr;gap:9px;align-items:baseline;
+    padding:8px 0;border-top:1px solid var(--rail);}
+  .ag-item:first-child,.ag-tip:first-child{border-top:0;padding-top:0;}
+  .ag-dot{width:8px;height:8px;border-radius:50%;align-self:center;}
+  .ag-when{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--chrome);white-space:nowrap;}
+  .ag-what{font-size:12.5px;line-height:1.35;}
+  .ag-what b{font-weight:600;}
+  .ag-what span{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;line-height:1.35;}
+  .ag-tip{display:flex;gap:9px;padding:9px 0;border-top:1px solid var(--rail);font-size:12.5px;
+    line-height:1.45;color:var(--muted);}
+  .ag-tip .ic{flex:0 0 auto;width:15px;text-align:center;font-size:12px;color:var(--muted);padding-top:1px;}
+  .ag-tip b{color:var(--paper);font-weight:600;}
+  .ag-tip.hot{color:var(--paper);}
+  .ag-tip.hot .ic{color:var(--focus);}
+  .ag-empty{font-size:12.5px;color:var(--muted);line-height:1.5;}
   .train-core{fill:var(--train);stroke:#fff;stroke-width:1.6;vector-effect:non-scaling-stroke;}
   .train-halo{fill:var(--train);transform-box:fill-box;transform-origin:center;animation:beacon 1.9s ease-out infinite;}
   @keyframes beacon{0%{transform:scale(1);opacity:.5}70%{transform:scale(2.7);opacity:0}100%{opacity:0}}
@@ -201,7 +234,7 @@
 <body>
 <div class="wrap">
   <p class="eyebrow">Amtrak No.&nbsp;6 · Eastbound</p>
-  <h1>California Zephyr <span class="dim">— where your signal goes dark</span></h1>
+  <h1>California Zephyr <span class="dim">· where your signal goes dark</span></h1>
   <p class="sub">Emeryville → Chicago · departs <span class="mono">Wed 8:25 AM PT</span> · about <span class="mono">52 hours</span> · <span class="mono">2,438 mi</span>. Pick a carrier to recolor the route and timeline; drag to pan, scroll or pinch to zoom (labels appear as you zoom in), and switch the theme. Times run on one 52-hour axis, shifting <span class="mono">PT → MT → CT</span> as you head east.</p>
 
   <div class="controls">
@@ -215,9 +248,9 @@
 
   <div class="legend">
     <span class="key"><span class="swatch" style="background:var(--good)"></span><span class="txt"><b>Good</b> signal</span></span>
-    <span class="key"><span class="swatch" style="background:var(--spotty)"></span><span class="txt"><b>Spotty</b> — often 3G, gaps between towns</span></span>
-    <span class="key"><span class="swatch" style="background:var(--dead)"></span><span class="txt"><b>Dead zone</b> — expect no service</span></span>
-    <span class="key night"><span class="swatch"></span><span class="txt">Overnight — <b>likely asleep</b></span></span>
+    <span class="key"><span class="swatch" style="background:var(--spotty)"></span><span class="txt"><b>Spotty</b>: often 3G, gaps between towns</span></span>
+    <span class="key"><span class="swatch" style="background:var(--dead)"></span><span class="txt"><b>Dead zone</b>: expect no service</span></span>
+    <span class="key night"><span class="swatch"></span><span class="txt">Overnight: <b>likely asleep</b></span></span>
   </div>
 
   <div class="sec-label">The route</div>
@@ -241,7 +274,7 @@
   <p class="mapcredit" id="mapcredit"></p>
 
   <div class="sec-label">Explore live · satellite</div>
-  <p class="sub" style="margin:0 0 10px">High-resolution satellite and topographic imagery for zooming into any stretch of the route. This view needs an internet connection — the map above stays fully offline. Tiles are Esri / Maxar &amp; USGS (Google Maps requires a paid key and forbids direct tile use; NASA's free imagery only resolves to ~250&nbsp;m, so it looks worse zoomed in).</p>
+  <p class="sub" style="margin:0 0 10px">High-resolution satellite and topographic imagery for zooming into any stretch of the route. This view needs an internet connection. The map above stays fully offline. Tiles are Esri / Maxar &amp; USGS (Google Maps requires a paid key and forbids direct tile use; NASA's free imagery only resolves to ~250&nbsp;m, so it looks worse zoomed in).</p>
   <div id="live-map"></div>
   <p class="dc-note" id="live-note">Pan and zoom freely; choose Satellite / Topographic / Streets at top-right. If tiles don't appear inside the Claude app, open the downloaded file in a browser with internet.</p>
 
@@ -271,7 +304,7 @@
       <input type="range" id="scrub" min="0" max="52.23" step="0.1" value="0" aria-label="Hours into trip">
       <span class="mono dc-val" id="scrubVal"></span>
     </div>
-    <p class="dc-note">Manual and fully offline. Sliding the delay pushes every <b>schedule</b> time later — stops, scenery, coverage. Meal service and nightfall keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route (a late train means less of the trip before each meal and before dark). Assumes the train holds its current delay. The train marker reads your device clock when “live” is on (still offline); switch it off to scrub the position by hand.</p>
+    <p class="dc-note">Manual and fully offline. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and nightfall keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route (a late train means less of the trip before each meal and before dark). Assumes the train holds its current delay. The train marker reads your device clock when “live” is on (still offline); switch it off to scrub the position by hand.</p>
   </div>
   <div class="strip-outer">
     <div class="sstars" id="sstars"></div>
@@ -284,10 +317,27 @@
     </div>
   </div>
 
+  <div class="sec-label">Now happening · up next</div>
+  <div class="agenda">
+    <div class="ag" id="agNowCard">
+      <div class="ag-h"><span>Right now</span><span class="carrier" id="agCarrier"></span></div>
+      <div id="agNow"></div>
+    </div>
+    <div class="ag">
+      <div class="ag-h"><span>Up next</span></div>
+      <ul class="ag-list" id="agNext"></ul>
+    </div>
+    <div class="ag">
+      <div class="ag-h"><span>Do now · get ready</span></div>
+      <ul class="ag-tips" id="agTips"></ul>
+    </div>
+  </div>
+  <p class="dc-note">This follows the train position you set above, whether that is the live clock, the delay, or a manual scrub. The colored dot on each item says whether <b>cellular is likely</b> at that point: green usable, amber spotty, red none. Coverage and platform times are estimates. Dining and darkness keep to the wall clock; everything else slides with the delay.</p>
+
   <div class="cards" id="cards"></div>
 
   <div class="sec-label">What to watch for</div>
-  <p class="sub" style="margin-bottom:2px">The Zephyr's scenery, in order, with which way to look. Sides are for your eastbound train — but the glass-roofed <b style="color:var(--paper)">Sightseer Lounge</b> car sees both sides and is the best seat in the house.</p>
+  <p class="sub" style="margin-bottom:2px">The Zephyr's scenery, in order, with which way to look. Sides are for your eastbound train. The glass-roofed <b style="color:var(--paper)">Sightseer Lounge</b> car sees both sides.</p>
   <div id="sights"></div>
   <p class="sight-note">The teal eye marks these on the map and timeline above. Cardinal directions are fixed to the landscape; left / right assume you're facing forward on eastbound Train&nbsp;6. California State Railroad Museum volunteers often narrate the Sierra and the Colorado Rockies stretches.</p>
 
@@ -295,7 +345,7 @@
   <div class="onboard">
     <div class="ob obs">
       <h4>Sightseer Lounge <span class="tag">open to all</span></h4>
-      <p>The observation car: an upper deck walled in floor-to-ceiling windows — the best seat on the train for scenery, and open to every passenger. The Café sits on the lower level. It fills through the Rockies, so claim a spot before Denver.</p>
+      <p>The observation car. An upper deck walled in floor-to-ceiling windows, open to every passenger, with the Café on the lower level. It fills through the Rockies, so claim a spot before Denver.</p>
     </div>
     <div class="ob dine">
       <h4>Dining car <span class="tag">sleeper&nbsp;included</span></h4>
@@ -303,7 +353,7 @@
     </div>
     <div class="ob cafe">
       <h4>Café car <span class="tag">open to all</span></h4>
-      <p>Lower level of the lounge — hot and cold snacks, coffee, soft drinks and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food and eat it upstairs in the lounge.</p>
+      <p>Lower level of the lounge. Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food and eat it upstairs.</p>
     </div>
   </div>
   <div class="meal-times">
@@ -311,10 +361,10 @@
     <div class="mt"><p class="m">Lunch</p><p class="h">11:30a–2:30p</p><small>board by 2:00</small></div>
     <div class="mt"><p class="m">Dinner</p><p class="h">5:00–9:00p</p><small>board by 8:15 · reserve</small></div>
   </div>
-  <p class="sight-note">Meals run on the train's local (moving) clock, last call ~15 min before each closes. Your trip starts mid-morning, so <b>lunch is the first meal Wednesday</b>, and with a ~2:45p arrival <b>lunch is the last meal Friday</b>. Thursday's lunch lands right in Glenwood and Gore canyons — you can eat with the Rockies in the window.</p>
+  <p class="sight-note">Meals run on the train's local (moving) clock, last call ~15 min before each closes. Your trip starts mid-morning, so <b>lunch is the first meal Wednesday</b>, and with a ~2:45p arrival <b>lunch is the last meal Friday</b>. Thursday's lunch lands in Glenwood and Gore canyons, so you can eat with the Rockies in the window.</p>
 
   <footer>
-    <b>No onboard Wi-Fi</b> on the Zephyr — cellular is your only link. Per-carrier coverage here is generalized from each network's known strengths — <b>Verizon</b> strongest across the rural West, <b>T-Mobile</b> weakest in the remote mountains and desert, <b>AT&amp;T</b> strong along the interstate corridors — plus rider reports. Treat it as a guide, not a guarantee, and check each carrier's own map for specifics. State outlines are simplified; clock times follow Amtrak's schedule and <b>drift later when the train runs behind</b>.
+    <b>No onboard Wi-Fi</b> on the Zephyr, so cellular is your only link. Per-carrier coverage here is generalized from rider reports and each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in the remote mountains and desert, AT&amp;T strong along the interstate corridors. Treat it as a guide, not a guarantee, and check each carrier's own map for specifics. State outlines are simplified. Clock times follow Amtrak's schedule and <b>drift later when the train runs behind</b>.
   </footer>
 </div>
 
@@ -505,7 +555,7 @@ const detail=[
  {seg:6,h:"Sierra / Donner Pass",t0:3.23,t1:5.60,o:0,p:"Climbing Colfax → Truckee, signal cuts out in the summit tunnels and snowsheds. Returns at Truckee and Reno."},
  {seg:9,h:"Nevada high desert",t0:7.20,t1:12.32,o:0,p:"Reno → Winnemucca → Elko: towns have service, long gaps between. Then a dead desert crossing overnight to Salt Lake City."},
  {seg:14,h:"Utah canyons",t0:20.6,t1:24.6,o:1,p:"Helper → Green River → Grand Junction via Price Canyon, the Book Cliffs and Ruby Canyon. Patchy, and partly pre-dawn."},
- {seg:16,h:"Colorado Rockies — the big one",t0:26.28,t1:31.0,o:1,p:"Glenwood Canyon, Gore Canyon and the 6.2-mi Moffat Tunnel. Long dead stretches; brief returns near the towns. Full signal back at Denver."},
+ {seg:16,h:"Colorado Rockies: the longest gap",t0:26.28,t1:31.0,o:1,p:"Glenwood Canyon, Gore Canyon and the 6.2-mi Moffat Tunnel. Long dead stretches; brief returns near the towns. Full signal back at Denver."},
 ];
 const chipEls=[];
 detail.forEach(c=>{
@@ -517,7 +567,7 @@ detail.forEach(c=>{
 /* ---------- sightseeing highlights ---------- */
 const scenic=[
  {name:"Cape Horn & American River Canyon",lng:-120.90,lat:39.10,t:3.6,day:"Wed",time:"~11:50a PT",dir:"S",side:"Right",mz:2.8,
-  desc:"The line clings to a cliff ~1,200 ft above the North Fork American River — look down into the gorge as you round the point."},
+  desc:"The line clings to a cliff ~1,200 ft above the North Fork American River. Look down into the gorge as you round the point."},
  {name:"Donner Lake & Donner Pass",lng:-120.24,lat:39.32,t:5.4,day:"Wed",time:"~1:40p PT",dir:"N",side:"Left",mz:2.8,
   desc:"A bird's-eye drop to the lake from Schallenberger Ridge at 7,000 ft, past snowsheds and tunnels of the first transcontinental railroad."},
  {name:"Truckee River Canyon",lng:-120.02,lat:39.42,t:6.3,day:"Wed",time:"~2:30p PT",dir:"BOTH",side:"Both",mz:3.2,
@@ -525,15 +575,15 @@ const scenic=[
  {name:"Book Cliffs",lng:-109.70,lat:39.15,t:22.9,day:"Thu",time:"~8:20a MT",dir:"N",side:"Left",mz:3.0,
   desc:"A ~200-mile wall of desert cliffs runs along the northern horizon between Green River and Grand Junction."},
  {name:"Ruby Canyon",lng:-108.95,lat:39.13,t:24.1,day:"Thu",time:"~9:20a MT",dir:"S",side:"Right",mz:2.8,
-  desc:"A red-rock gorge on the Colorado River with no road access — reachable only by rail or raft. Straddles the Utah–Colorado line."},
+  desc:"A red-rock gorge on the Colorado River with no road access, reachable only by rail or raft. It straddles the Utah–Colorado line."},
  {name:"Glenwood Canyon",lng:-107.10,lat:39.55,t:26.6,day:"Thu",time:"~12:00p MT",dir:"BOTH",side:"Right",mz:2.6,
-  desc:"The Colorado River threads a narrow limestone canyon beside I-70 — one of the most beautiful rail miles in the country. River on the right."},
+  desc:"The Colorado River threads a narrow limestone canyon beside I-70. River on the right."},
  {name:"Gore Canyon",lng:-106.55,lat:39.95,t:28.6,day:"Thu",time:"~1:30p MT",dir:"BOTH",side:"Right",mz:2.6,
-  desc:"The wildest stretch: whitewater rapids and sheer walls with no road alongside — rail or raft only. River on the right."},
+  desc:"Whitewater rapids and sheer walls with no road alongside, rail or raft only. River on the right."},
  {name:"Byers & Fraser Canyons",lng:-106.05,lat:40.05,t:29.9,day:"Thu",time:"~3:00p MT",dir:"BOTH",side:"Both",mz:3.2,
   desc:"Follow the Fraser River through remote canyons climbing toward Winter Park ski country."},
  {name:"Moffat Tunnel",lng:-105.64,lat:39.90,t:30.6,day:"Thu",time:"~3:45p MT",dir:"TUNNEL",side:"Tunnel",mz:2.8,
-  desc:"6.2 miles in darkness beneath the Continental Divide at 9,239 ft — the roof of the route. No view, but the trip's great milestone."},
+  desc:"6.2 miles in darkness beneath the Continental Divide at 9,239 ft, the highest point on the route. No view while you are inside it."},
  {name:"Front Range descent into Denver",lng:-105.35,lat:39.80,t:32.4,day:"Thu",time:"~5:30p MT",dir:"E",side:"Both",mz:2.6,
   desc:"Coming off the foothills, the Great Plains and the Denver skyline open out below; the horseshoe curves show both sides for a dusk finale."},
  {name:"Mississippi River at Burlington",lng:-91.11,lat:40.81,t:47.5,day:"Fri",time:"~9:50a CT",dir:"BOTH",side:"Both",mz:2.8,
@@ -580,10 +630,10 @@ function compass(dir){
   return '<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">'+g+'</svg>';
 }
 function lookText(s){
-  if(s.dir==="TUNNEL") return "In the tunnel — no view";
-  if(s.dir==="BOTH" && s.side==="Both") return "Both sides — best from the lounge";
-  if(s.dir==="BOTH") return "Both sides — river on the "+s.side.toLowerCase()+" (eastbound)";
-  return "Look "+CARD[s.dir]+" — "+s.side.toLowerCase()+" side (eastbound)";
+  if(s.dir==="TUNNEL") return "In the tunnel, no view";
+  if(s.dir==="BOTH" && s.side==="Both") return "Both sides, best from the lounge";
+  if(s.dir==="BOTH") return "Both sides, river on the "+s.side.toLowerCase()+" (eastbound)";
+  return "Look "+CARD[s.dir]+", "+s.side.toLowerCase()+" side (eastbound)";
 }
 const sightsEl=document.getElementById("sights");
 const DAY_FULL={Wed:"Wednesday",Thu:"Thursday",Fri:"Friday"};
@@ -635,6 +685,7 @@ function render(){
     o.chip.style.color=(theme==="light"&&st==="spotty")?"#fff":"#0c1116";});
   document.getElementById("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
   if(window.__recolorLive)window.__recolorLive();
+  if(window.__agendaUpdate)window.__agendaUpdate();
 }
 document.getElementById("carrierCtl").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;carrier=b.dataset.carrier;
@@ -651,8 +702,8 @@ function refreshImagery(){
   document.documentElement.dataset.imgoff=on?"0":"1";
   const rd=(curLayer==="roads"); gRoads.style.display=rd?"":"none"; gTowns.style.display=rd?"":"none";
   const cr=document.getElementById("mapcredit");
-  if(curLayer==="terrain") cr.textContent=on?"Relief: Natural Earth":"Zoomed past imagery — schematic detail";
-  else if(curLayer==="satellite") cr.textContent=on?"Imagery: NASA Blue Marble":"Zoomed past imagery — schematic detail";
+  if(curLayer==="terrain") cr.textContent=on?"Relief: Natural Earth":"Zoomed past imagery, schematic detail";
+  else if(curLayer==="satellite") cr.textContent=on?"Imagery: NASA Blue Marble":"Zoomed past imagery, schematic detail";
   else cr.textContent="";
 }
 function setLayer(L){curLayer=L;document.documentElement.dataset.layer=L;refreshImagery();}
@@ -737,6 +788,7 @@ function nearName(i,dir){for(let j=i;j>=0&&j<stations.length;j+=dir){if(stations
 function updateTrain(){
   const t=computeTNow();
   if(window.__onTrain)window.__onTrain(t);
+  if(window.__agendaUpdate)window.__agendaUpdate(t);
   if(t===null){trainG.style.display="none";liveStatus.textContent="set a date";return;}
   if(t<-0.001){trainG.style.display="none";liveStatus.textContent="departs in "+fmtDur(-t);if(scrubVal)scrubVal.textContent="";return;}
   trainG.style.display="";
@@ -790,6 +842,171 @@ document.getElementById("anchorSet").addEventListener("click",()=>{
   let d=obs-sm; if(d<-180)d+=1440; if(d>720)d-=1440; d=Math.max(-30,Math.min(360,d));
   delayEl.value=Math.round(d/5)*5; applyDelay(d/60);
 });
+/* ---------- now happening / up next ---------- */
+/* Everything below reads the same schedule-elapsed t as the train marker: schedule items compare
+   directly, wall-clock items (meals, darkness) are shifted by -DELAY, exactly as applyDelay does. */
+const SERVICE={RNO:10,WNN:10,SLC:20,GJT:15,DEN:55,OMA:10,GBB:10};   // approx minutes off the train
+const NIGHTS=[{a:12.0,b:20.6},{a:35.8,b:43.4}];
+const CARRIER_NAME={verizon:"Verizon",att:"AT&T",tmobile:"T-Mobile"};
+const agNowEl=document.getElementById("agNow"),agNextEl=document.getElementById("agNext"),
+      agTipsEl=document.getElementById("agTips"),agCarrierEl=document.getElementById("agCarrier");
+
+function clockAt(t){const zf=zoneFor(t),c=fmtClock(t+DELAY,zf.o);
+  return {time:c.time,day:c.day,z:zf.z,full:c.day+" ~"+c.time+" "+zf.z};}
+function segAt(t){if(t<=stations[0].t)return 0;
+  for(let i=0;i<stations.length-1;i++)if(t<stations[i+1].t)return i;
+  return stations.length-2;}
+function covAt(t){return covByCarrier[carrier][segAt(t)];}
+function covRun(t){const cov=covByCarrier[carrier],i=segAt(t),st=cov[i];
+  let a=i;while(a>0&&cov[a-1]===st)a--;
+  let b=i;while(b<cov.length-1&&cov[b+1]===st)b++;
+  return {st,t0:stations[a].t,t1:stations[b+1].t};}
+function nextRunOf(t,want){const cov=covByCarrier[carrier];
+  for(let j=segAt(t)+1;j<cov.length;j++)if(cov[j]===want&&cov[j-1]!==want){
+    const r=covRun(stations[j].t+.001);return {t:stations[j].t,len:r.t1-r.t0,end:r.t1};}
+  return null;}
+function nightAt(t){for(const n of NIGHTS){const a=n.a-DELAY,b=n.b-DELAY;if(t>=a&&t<b)return {a,b};}return null;}
+function nextDark(t){for(const n of NIGHTS){const a=n.a-DELAY;if(a>t)return a;}return null;}
+function mealAt(t){for(const m of meals){const a=m.t0-DELAY,b=m.t1-DELAY;if(t>=a&&t<b)return {m,a,b};}return null;}
+function nextMeal(t){for(const m of meals){const a=m.t0-DELAY;if(a>t)return {m,a,b:m.t1-DELAY};}return null;}
+function nextSight(t){for(const s of scenic)if(s.t>t)return s;return null;}
+function sightNow(t){for(const s of scenic)if(Math.abs(s.t-t)<.3)return s;return null;}
+function nextStop(t){for(let i=0;i<stations.length;i++)if(stations[i].name&&stations[i].t>t)return stations[i];return null;}
+
+function agEvents(){
+  const cov=covByCarrier[carrier],ev=[];
+  stations.forEach(s=>{if(!s.name)return;
+    ev.push({t:s.t,pri:2,title:s.name,sub:SERVICE[s.c]?("station stop · about "+SERVICE[s.c]+" min on the platform"):"station stop"});});
+  scenic.forEach(s=>ev.push({t:s.t,pri:1,title:s.name,sub:lookText(s)}));
+  meals.forEach(m=>ev.push({t:m.t0-DELAY,pri:2,title:m.name+" opens",
+    sub:"dining car · last call ~"+clockAt(m.t1-DELAY-.25).time}));
+  NIGHTS.forEach(n=>{
+    ev.push({t:n.a-DELAY,pri:3,title:"Dark outside",sub:"nothing to see until dawn"});
+    ev.push({t:n.b-DELAY,pri:3,title:"Daylight returns",sub:"the window is worth watching again"});});
+  const LBL={good:"Signal comes back",spotty:"Signal turns spotty",dead:"Signal drops out"},
+        WHAT={good:"usable",spotty:"patchy 3G, gaps between towns",dead:"no service"};
+  for(let i=1;i<cov.length;i++){
+    if(cov[i]===cov[i-1])continue;
+    const r=covRun(stations[i].t+.001);
+    ev.push({t:stations[i].t,pri:0,title:LBL[cov[i]],sub:WHAT[cov[i]]+" for about "+fmtDur(r.t1-r.t0)});}
+  return ev.sort((a,b)=>a.t-b.t||a.pri-b.pri);
+}
+
+function agTipList(t){
+  const tips=[],pal=PAL[theme],CN=CARRIER_NAME[carrier],run=covRun(t),
+        add=(ic,html,hot)=>tips.push({ic,html,hot:!!hot});
+  const sn=sightNow(t),ns=nextSight(t),mn=mealAt(t),nm=nextMeal(t),dark=nightAt(t),nd=nextDark(t),st=nextStop(t);
+  /* signal — the thing worth acting on first */
+  if(run.st==="dead"){
+    const left=run.t1-t;
+    if(left<=.5) add("↑",'<b>Signal back in ~'+fmtDur(left)+'</b> near '+nearName(segAt(run.t1),1)+'. Queue your uploads and unsent messages now so they go the moment bars return.',true);
+    else add("✈",'<b>No service for another ~'+fmtDur(left)+'.</b> Good stretch for the lounge car or a nap. Next usable bars ~'+clockAt(run.t1).time+' near '+nearName(segAt(run.t1),1)+'.');
+  }else{
+    const d=nextRunOf(t,"dead");
+    if(d&&d.t-t<=1.6&&d.len>=.6)
+      add("⤓",'<b>Send it before ~'+clockAt(d.t).time+'.</b> '+CN+' drops out in ~'+fmtDur(d.t-t)+' and stays out about '+fmtDur(d.len)+'. Download maps and a few episodes now, and start any big upload while you still have bars.',true);
+    else if(run.st==="spotty")
+      add("◍",'<b>Spotty here.</b> Texts and calls mostly hold; video and big files will stall. Load anything heavy at the next town.');
+    else if(d)
+      add("✓",'<b>'+CN+' is usable</b> for about '+fmtDur(run.t1-t)+'. The next dead stretch starts ~'+clockAt(d.t).time+' and runs '+fmtDur(d.len)+'.');
+    else
+      add("✓",'<b>'+CN+' is usable</b> and stays that way to Chicago.');
+  }
+  /* scenery */
+  if(sn) add("◉",'<b>'+sn.name+', right now.</b> '+lookText(sn)+'.',true);
+  else if(ns&&ns.t-t<=.85)
+    add("◉",'<b>Head up to the Sightseer Lounge.</b> '+ns.name+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.'+(t<byC.DEN.t?' It fills through the Rockies, so go early.':''),ns.t-t<=.5);
+  /* dining */
+  if(mn) add("▨",'<b>'+mn.m.name+' is being served.</b> Last call ~'+clockAt(mn.b-.25).time+'. Sleeper fares include it; coach can join if seats are free.');
+  else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.m.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.m.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
+  else if(nm&&nm.m.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
+  /* platform time */
+  if(st&&st.t-t<=.6&&SERVICE[st.c]&&SERVICE[st.c]>=15)
+    add("▮",'<b>'+st.name+' in ~'+fmtDur(st.t-t)+'.</b> About '+SERVICE[st.c]+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
+  /* light */
+  if(dark) add("☾",'<b>Dark out.</b> Daylight ~'+clockAt(dark.b).time+'. Both overnight stretches are mostly dead zones, so this is the part to sleep through.');
+  else if(nd&&nd-t<=1.2) add("☾",'<b>Dark in ~'+fmtDur(nd-t)+'.</b> Charge at the seat outlet while there is nothing to look at.');
+  return tips.slice(0,4);
+}
+
+function updateAgenda(t){
+  if(t===undefined)t=computeTNow();
+  const pal=PAL[theme];
+  agCarrierEl.textContent=CARRIER_NAME[carrier];
+  agNextEl.innerHTML="";agTipsEl.innerHTML="";
+  const paint=(items)=>{
+    items.forEach(e=>{
+      const li=document.createElement("li");li.className="ag-item";
+      const c=clockAt(e.t);
+      li.innerHTML='<span class="ag-dot" style="background:'+pal[covAt(e.t)]+'"></span>'+
+        '<span class="ag-when">'+c.time+'</span>'+
+        '<span class="ag-what"><b>'+e.title+'</b><span>'+e.sub+'</span></span>';
+      agNextEl.appendChild(li);});
+  };
+  if(t===null){
+    agNowEl.innerHTML='<p class="ag-empty">Set a departure date above, or switch off <b>live now</b> and scrub the position by hand.</p>';
+    paint(agEvents().slice(0,5));
+    agTipsEl.innerHTML='<li class="ag-tip"><span class="ic">⤓</span><span><b>Download before you board.</b> Offline maps, playlists, a few episodes. There is no onboard Wi-Fi.</span></li>';
+    return;
+  }
+  if(t<0){
+    agNowEl.innerHTML='<div class="ag-hero"><p class="ag-where">Not departed: Emeryville</p></div>'+
+      '<p class="ag-stamp">leaves in '+fmtDur(-t)+' · '+clockAt(0).full+'</p>';
+    paint(agEvents().filter(e=>e.t>=0).slice(0,5));
+    [['⤓','<b>Download everything now.</b> There is no onboard Wi-Fi: offline maps, playlists, a few episodes, whatever you plan to read. Verizon holds up best in the rural West; T-Mobile is weakest through the mountains and desert.'],
+     ['▨','<b>Lunch is your first meal.</b> The train leaves mid-morning. In a sleeper, book dinner with your car attendant once you board.'],
+     ['◉','<b>Sit on the right</b> for the first afternoon if you can. For the canyons, use the Sightseer Lounge, which sees both sides.']
+    ].forEach(([ic,html])=>{const li=document.createElement("li");li.className="ag-tip";
+      li.innerHTML='<span class="ic">'+ic+'</span><span>'+html+'</span>';agTipsEl.appendChild(li);});
+    return;
+  }
+  if(t>=TOTAL){
+    agNowEl.innerHTML='<div class="ag-hero"><span class="chip" style="background:'+pal.good+'">Usable</span><p class="ag-where">Arrived: Chicago Union Station</p></div>'+
+      '<p class="ag-stamp">'+fmtDur(TOTAL)+' · 2,438 mi · full coverage</p>';
+    agNextEl.innerHTML='<li class="ag-item"><span class="ag-dot" style="background:'+pal.good+'"></span><span class="ag-when">—</span><span class="ag-what"><b>End of the line</b><span>2,438 miles behind you</span></span></li>';
+    agTipsEl.innerHTML='<li class="ag-tip"><span class="ic">✓</span><span><b>Back on the network.</b> Everything you queued through the Rockies should be going out now.</span></li>';
+    return;
+  }
+  /* --- right now --- */
+  const p=trainXY(t),run=covRun(t),st=covAt(t),c=clockAt(t),
+        prev=nearName(p.i,-1),next=nearName(p.i+1,1),
+        atStation=stations[p.i].name&&t-stations[p.i].t<.12;
+  agNowEl.innerHTML=
+    '<div class="ag-hero"><span class="chip" style="background:'+pal[st]+';color:'+((theme==="light"&&st==="spotty")?"#fff":"#0c1116")+'">'+STAT[st]+'</span>'+
+    '<p class="ag-where">'+(atStation?("At "+stations[p.i].name):(prev+" → "+next))+'</p></div>'+
+    '<p class="ag-stamp">'+c.full+' · '+fmtDur(t)+' in · '+fmtDur(TOTAL-t)+' to Chicago</p>'+
+    '<div class="ag-rows" id="agRows"></div>';
+  const rows=[];
+  /* signal */
+  const nextSt=run.t1<TOTAL?covAt(run.t1+.001):null;
+  rows.push(["Signal",st==="dead"
+    ?'No service · <em>about '+fmtDur(run.t1-t)+' left'+(nextSt?', '+STAT[nextSt].toLowerCase()+' again ~'+clockAt(run.t1).time+' near '+nearName(segAt(run.t1),1):'')+'</em>'
+    :(STAT[st]+' on '+CARRIER_NAME[carrier]+' · <em>holds about '+fmtDur(run.t1-t)+(nextSt?', then '+STAT[nextSt].toLowerCase()+' from ~'+clockAt(run.t1).time:'')+'</em>')]);
+  /* outside */
+  const dk=nightAt(t),nd=nextDark(t);
+  rows.push(["Outside",dk?('Dark · <em>daylight ~'+clockAt(dk.b).time+'</em>')
+    :('Daylight'+(nd?' · <em>dark from ~'+clockAt(nd).time+'</em>':''))]);
+  /* dining */
+  const mn=mealAt(t),nm=nextMeal(t);
+  rows.push(["Dining",mn?(mn.m.name+' being served · <em>last call ~'+clockAt(mn.b-.25).time+'</em>')
+    :(nm?(nm.m.name+' opens ~'+clockAt(nm.a).time+' · <em>in '+fmtDur(nm.a-t)+'</em>'):'Closed for the trip')]);
+  /* window */
+  const sn=sightNow(t),ns=nextSight(t);
+  rows.push(["Window",sn?('<b>'+sn.name+'</b> · <em>'+lookText(sn)+'</em>')
+    :(ns?(ns.name+' ~'+clockAt(ns.t).time+' · <em>in '+fmtDur(ns.t-t)+'</em>'):'No highlights left, just Illinois farmland')]);
+  const rowsEl=document.getElementById("agRows");
+  rows.forEach(([k,v])=>{const d=document.createElement("div");d.className="ag-row";
+    d.innerHTML='<span class="k">'+k+'</span><span class="v">'+v+'</span>';rowsEl.appendChild(d);});
+  /* --- up next --- */
+  const up=agEvents().filter(e=>e.t>t+.02).slice(0,5);
+  if(up.length)paint(up);
+  else agNextEl.innerHTML='<li class="ag-item"><span class="ag-dot" style="background:'+pal[st]+'"></span><span class="ag-when">—</span><span class="ag-what"><b>Chicago</b><span>nothing scheduled before arrival</span></span></li>';
+  /* --- tips --- */
+  agTipList(t).forEach(o=>{const li=document.createElement("li");li.className="ag-tip"+(o.hot?" hot":"");
+    li.innerHTML='<span class="ic">'+o.ic+'</span><span>'+o.html+'</span>';agTipsEl.appendChild(li);});
+}
+window.__agendaUpdate=updateAgenda;
+
 applyDelay(0);
 setLiveMode();
 setLayer("schematic");
@@ -800,7 +1017,7 @@ requestAnimationFrame(()=>{applyView();});
 /* ================= live high-res map (Esri tiles — needs internet) ================= */
 (function(){
   const note=document.getElementById("live-note");
-  if(!window.L){ if(note)note.textContent="Live-map library didn't load — open this file in a web browser with internet."; return; }
+  if(!window.L){ if(note)note.textContent="Live-map library didn't load. Open this file in a web browser with internet."; return; }
   try{
     const routeLL=stations.map(s=>[s.lat,s.lng]);
     const lmap=L.map('live-map',{zoomControl:true}).fitBounds(routeLL,{padding:[24,24]});
@@ -811,7 +1028,7 @@ requestAnimationFrame(()=>{applyView();});
     esriImg.addTo(lmap);
     L.control.layers({'Satellite':esriImg,'Roadmap':esriStreet,'Topographic':esriTopo,'Streets (OSM)':osm},{},{collapsed:false}).addTo(lmap);
     let warned=false;
-    esriImg.on('tileerror',()=>{ if(warned)return; warned=true; if(note)note.innerHTML="Tiles are blocked in this viewer — open the downloaded file in a browser to see the imagery. (The offline map above still works everywhere.)"; });
+    esriImg.on('tileerror',()=>{ if(warned)return; warned=true; if(note)note.innerHTML="Tiles are blocked in this viewer. Open the downloaded file in a browser to see the imagery; the offline map above works everywhere."; });
     setTimeout(()=>lmap.invalidateSize(),250);
 
     // coverage-colored route (updates with carrier/theme)
