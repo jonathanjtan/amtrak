@@ -172,6 +172,11 @@
   html[data-theme="light"] .dc-val{color:#3d6fa0;}
   .delayctl select,.delayctl input[type=time]{background:var(--ink);color:var(--paper);border:1px solid var(--rail);border-radius:7px;padding:6px 8px;font-size:12.5px;font-family:inherit;}
   .dc-anchor .dc-lab{flex:0 0 auto;}
+  .dc-live .dc-lab{flex:0 0 auto;}
+  .dc-fetch{flex:1 1 200px;font-size:11.5px;color:var(--muted);}
+  .dc-fetch.on{color:var(--dine);}
+  html[data-theme="light"] .dc-fetch.on{color:#3d6fa0;}
+  .dc-fetch.off{color:var(--chrome);}
   .dc-note{font-size:11px;color:var(--muted);line-height:1.5;margin:11px 0 0;}
   .dc-note b{color:var(--paper);}
   /* now happening / up next */
@@ -280,9 +285,15 @@
 
   <div class="sec-label">The 52 hours</div>
   <div class="delayctl">
+    <div class="dc-row dc-live">
+      <span class="dc-lab">Live status</span>
+      <select id="liveTrain" aria-label="Which #6 departure you are on"><option value="">checking…</option></select>
+      <span class="dc-fetch mono" id="liveFetch">checking Amtrak…</span>
+      <button id="liveRefresh" class="iconbtn" type="button">Refresh</button>
+    </div>
     <div class="dc-row">
       <span class="dc-lab">Train status</span>
-      <input type="range" id="delay" min="-30" max="360" step="5" value="0" aria-label="Current delay in minutes">
+      <input type="range" id="delay" min="-30" max="720" step="5" value="0" aria-label="Current delay in minutes">
       <span class="dc-val mono" id="delayVal">On schedule</span>
       <button id="delayReset" class="iconbtn" type="button">Reset</button>
     </div>
@@ -304,7 +315,7 @@
       <input type="range" id="scrub" min="0" max="52.23" step="0.1" value="0" aria-label="Hours into trip">
       <span class="mono dc-val" id="scrubVal"></span>
     </div>
-    <p class="dc-note">Manual and fully offline. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and nightfall keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route (a late train means less of the trip before each meal and before dark). Assumes the train holds its current delay. The train marker reads your device clock when “live” is on (still offline); switch it off to scrub the position by hand.</p>
+    <p class="dc-note">The delay sets itself from Amtrak's live tracking when you have a signal, refreshing every two minutes; pick your departure from the dropdown if more than one #6 is out there. Drag the slider yourself and it stops chasing the feed until you hit Refresh. With no signal everything below still works — set the delay by hand, or from the last stop you left. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and nightfall keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route (a late train means less of the trip before each meal and before dark). Assumes the train holds its current delay. The train marker reads your device clock when “live” is on (still offline); switch it off to scrub the position by hand.</p>
   </div>
   <div class="strip-outer">
     <div class="sstars" id="sstars"></div>
@@ -832,10 +843,13 @@ function applyDelay(hrs){
   stations.filter(s=>s.name&&s.time).forEach(s=>{const zf=zoneFor(s.t),c=fmtClock(s.t,zf.o);
     const o=document.createElement("option");o.value=s.c;o.textContent=s.name+" (sched "+c.time+")";sel.appendChild(o);});})();
 const delayEl=document.getElementById("delay");
-delayEl.addEventListener("input",()=>applyDelay(+delayEl.value/60));
-document.getElementById("delayReset").addEventListener("click",()=>{delayEl.value=0;applyDelay(0);});
+let liveManual=false;                       // true once you set the delay by hand; stops the live feed overwriting you
+function goManual(){liveManual=true;if(window.__liveNote)window.__liveNote();}
+delayEl.addEventListener("input",()=>{goManual();applyDelay(+delayEl.value/60);});
+document.getElementById("delayReset").addEventListener("click",()=>{goManual();delayEl.value=0;applyDelay(0);});
 document.getElementById("anchorSet").addEventListener("click",()=>{
   const code=document.getElementById("anchorStop").value, tv=document.getElementById("anchorTime").value; if(!tv)return;
+  goManual();
   const st=byC[code], zf=zoneFor(st.t);
   let sm=DEP+(st.t+zf.o)*60; sm=((sm%1440)+1440)%1440;
   const p=tv.split(":"), obs=(+p[0])*60+(+p[1]);
@@ -1009,6 +1023,88 @@ window.__agendaUpdate=updateAgenda;
 
 applyDelay(0);
 setLiveMode();
+
+/* ================= live delay from Amtrak tracking (optional — the rest of the page is offline) =================
+   Amtraker mirrors Amtrak's own train-status feed, CORS-open and key-free. One fetch gives every #6 currently
+   out on the route; we read how late the train is running and feed that straight into the delay above, so the
+   page shows the real trip instead of the timetable. Any failure leaves the manual controls untouched. */
+(function(){
+  const URL_6="https://api-v3.amtraker.com/v3/trains/6", REFRESH=120000;
+  const sel=document.getElementById("liveTrain"), note=document.getElementById("liveFetch");
+  let runs=[], lastGood=null;
+
+  const minsBetween=(a,b)=>(new Date(a)-new Date(b))/60000;
+  function lateText(m){
+    if(m===null||isNaN(m))return "no estimate yet";
+    const r=Math.round(m);
+    if(Math.abs(r)<=2)return "on time";
+    if(r<0)return Math.abs(r)+" min early";
+    const H=Math.floor(r/60),M=r%60;return "~"+(H?H+"h ":"")+M+"m late";
+  }
+  function depLabel(run){
+    const s=run.stations[0];
+    return new Date(s.schDep).toLocaleDateString("en-US",{timeZone:"America/Los_Angeles",weekday:"short",month:"short",day:"numeric"});
+  }
+  /* how late the train is running right now: the most recent real departure, else the next stop's estimate */
+  function runState(run){
+    let mins=null,where=null,verb="";
+    run.stations.forEach(s=>{if(s.status==="Departed"&&s.dep&&s.schDep){mins=minsBetween(s.dep,s.schDep);where=s.name;verb="out of";}});
+    const next=run.stations.find(s=>s.status!=="Departed");
+    if(mins===null&&next&&next.arr&&next.schArr){mins=minsBetween(next.arr,next.schArr);where=next.name;verb="into";}
+    return {mins,where,verb,next:next?next.name:null,started:run.stations.some(s=>s.status==="Departed"),done:!next};
+  }
+  function stamp(){return new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}).toLowerCase().replace(/\s/g,"");}
+
+  function paintNote(){
+    if(!lastGood){return;}
+    const {st,at}=lastGood;
+    if(liveManual){note.className="dc-fetch mono off";
+      note.textContent="manual override · live said "+lateText(st.mins)+" — Refresh to follow it again";return;}
+    note.className="dc-fetch mono on";
+    note.textContent=(st.done?"arrived Chicago":lateText(st.mins)+(st.where?" "+st.verb+" "+st.where:""))+" · live "+at;
+  }
+  window.__liveNote=paintNote;
+
+  function applyRun(run){
+    const st=runState(run); lastGood={st,at:stamp()};
+    const d=run.stations[0].schDep.slice(0,10);
+    if(depDate.value!==d){depDate.value=d;updateTrain();}
+    if(!liveManual&&st.mins!==null&&!isNaN(st.mins)){
+      const m=Math.max(-30,Math.min(720,Math.round(st.mins)));
+      delayEl.value=Math.round(m/5)*5;
+      applyDelay(m/60);
+    }
+    paintNote();
+  }
+
+  function load(){
+    if(!lastGood){note.className="dc-fetch mono";note.textContent="checking Amtrak…";}
+    fetch(URL_6,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(j=>{
+      const list=(j["6"]||[]).filter(r=>r.stations&&r.stations.length);
+      if(!list.length){note.className="dc-fetch mono";note.textContent="no #6 on the road right now";return;}
+      list.sort((a,b)=>new Date(a.stations[0].schDep)-new Date(b.stations[0].schDep));
+      runs=list;
+      const keep=sel.value;
+      sel.innerHTML="";
+      list.forEach(r=>{const st=runState(r),o=document.createElement("option");
+        o.value=r.trainID;o.textContent=depLabel(r)+" · "+(st.done?"arrived":st.started?lateText(st.mins):"not out yet");
+        sel.appendChild(o);});
+      let i=list.findIndex(r=>r.trainID===keep);
+      if(i<0)i=list.findIndex(r=>{const st=runState(r);return st.started&&!st.done;});
+      if(i<0)i=0;
+      sel.value=list[i].trainID;
+      applyRun(list[i]);
+    }).catch(()=>{
+      note.className="dc-fetch mono off";
+      note.textContent=lastGood?("no signal · holding "+lateText(lastGood.st.mins)+" from "+lastGood.at)
+                               :"no signal — set the delay by hand below";
+    });
+  }
+  sel.addEventListener("change",()=>{const r=runs.find(x=>x.trainID===sel.value);if(r){liveManual=false;applyRun(r);}});
+  document.getElementById("liveRefresh").addEventListener("click",()=>{liveManual=false;load();});
+  load();
+  setInterval(load,REFRESH);
+})();
 setLayer("schematic");
 
 render();
