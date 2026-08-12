@@ -315,7 +315,7 @@
       <input type="range" id="scrub" min="0" max="52.23" step="0.1" value="0" aria-label="Hours into trip">
       <span class="mono dc-val" id="scrubVal"></span>
     </div>
-    <p class="dc-note">The delay sets itself from Amtrak's live tracking when you have a signal, refreshing every two minutes; pick your departure from the dropdown if more than one #6 is out there. Drag the slider yourself and it stops chasing the feed until you hit Refresh. With no signal everything below still works — set the delay by hand, or from the last stop you left. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and nightfall keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route (a late train means less of the trip before each meal and before dark). Assumes the train holds its current delay. The train marker reads your device clock when “live” is on (still offline); switch it off to scrub the position by hand.</p>
+    <p class="dc-note">The delay sets itself from Amtrak's live tracking when you have a signal, refreshing every two minutes; pick your departure from the dropdown if more than one #6 is out there — it stays picked when you come back. Left alone it follows today's departure. Drag the slider yourself and it stops chasing the feed until you hit Refresh. With no signal everything below still works — set the delay by hand, or from the last stop you left. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and nightfall keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route (a late train means less of the trip before each meal and before dark). Assumes the train holds its current delay. The train marker reads your device clock when “live” is on (still offline); switch it off to scrub the position by hand.</p>
   </div>
   <div class="strip-outer">
     <div class="sstars" id="sstars"></div>
@@ -1033,7 +1033,15 @@ setLiveMode();
   const sel=document.getElementById("liveTrain"), note=document.getElementById("liveFetch");
   let runs=[], lastGood=null;
 
+  const PICK="zephyr-dep";                 // your departure date, kept across reloads
   const minsBetween=(a,b)=>(new Date(a)-new Date(b))/60000;
+  const depOf=run=>run?run.stations[0].schDep.slice(0,10):null;
+  const byID=(list,id)=>list.find(r=>r.trainID===id);
+  const byDep=(list,d)=>d?list.findIndex(r=>depOf(r)===d):-1;
+  const todayPT=()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/Los_Angeles"});
+  function recall(){try{return localStorage.getItem(PICK);}catch(e){return null;}}
+  function remember(run){try{localStorage.setItem(PICK,depOf(run));}catch(e){}}
+  function forget(){try{localStorage.removeItem(PICK);}catch(e){}}
   function lateText(m){
     if(m===null||isNaN(m))return "no estimate yet";
     const r=Math.round(m);
@@ -1084,12 +1092,15 @@ setLiveMode();
       if(!list.length){note.className="dc-fetch mono";note.textContent="no #6 on the road right now";return;}
       list.sort((a,b)=>new Date(a.stations[0].schDep)-new Date(b.stations[0].schDep));
       runs=list;
-      const keep=sel.value;
+      const keep=depOf(byID(runs,sel.value))||recall();
       sel.innerHTML="";
       list.forEach(r=>{const st=runState(r),o=document.createElement("option");
         o.value=r.trainID;o.textContent=depLabel(r)+" · "+(st.done?"arrived":st.started?lateText(st.mins):"not out yet");
         sel.appendChild(o);});
-      let i=list.findIndex(r=>r.trainID===keep);
+      /* your own pick wins — this session's, or the one saved from last time — then today's
+         departure, then whatever is out on the route. */
+      let i=byDep(list,keep);
+      if(i<0){forget();i=byDep(list,todayPT());}
       if(i<0)i=list.findIndex(r=>{const st=runState(r);return st.started&&!st.done;});
       if(i<0)i=0;
       sel.value=list[i].trainID;
@@ -1100,7 +1111,10 @@ setLiveMode();
                                :"no signal — set the delay by hand below";
     });
   }
-  sel.addEventListener("change",()=>{const r=runs.find(x=>x.trainID===sel.value);if(r){liveManual=false;applyRun(r);}});
+  sel.addEventListener("change",()=>{const r=byID(runs,sel.value);if(r){remember(r);liveManual=false;applyRun(r);}});
+  /* setting the date by hand is the same choice made from the other end */
+  depDate.addEventListener("change",()=>{const r=runs.find(x=>depOf(x)===depDate.value);
+    if(r&&r.trainID!==sel.value){sel.value=r.trainID;remember(r);liveManual=false;applyRun(r);}});
   document.getElementById("liveRefresh").addEventListener("click",()=>{liveManual=false;load();});
   load();
   setInterval(load,REFRESH);
