@@ -448,7 +448,18 @@ function setLiveMode(){
   updateTrain();
 }
 liveOn.addEventListener("change",setLiveMode);
-depDate.addEventListener("change",()=>rebuild());
+depDate.addEventListener("change",()=>{
+  /* the waits and the ranking depend on the day, so a journey has to be planned
+     again rather than redrawn with its old answer */
+  if(journey){
+    const a=journey.a, b=journey.b;
+    journey=null;
+    origIn.value=stopLabel(a); destIn.value=stopLabel(b);
+    repick();
+    return;
+  }
+  rebuild();
+});
 scrub.addEventListener("input",updateTrain);
 delayEl.addEventListener("input",()=>applyDelay(+delayEl.value/60));
 $("delayReset").addEventListener("click",()=>{delayEl.value=0;applyDelay(0);});
