@@ -178,6 +178,18 @@ function drawSights(){
 }
 
 /* ================= dining ================= */
+/* "Lunch, Dinner, Breakfast, Lunch, Dinner, Breakfast and Lunch" tells you
+   nothing; the same seven services grouped by day tell you what to expect. */
+function mealsByDay(){
+  const days=[];
+  LEG.meals.forEach(m=>{
+    const d=clockAt(m.a).day, last=days[days.length-1];
+    if(last&&last.day===d) last.names.push(m.name.toLowerCase());
+    else days.push({day:d,names:[m.name.toLowerCase()]});
+  });
+  const join=a=>a.length>1?a.slice(0,-1).join(", ")+" and "+a[a.length-1]:a[0];
+  return days.map(d=>(d.names.length===3?"all three":join(d.names))+" on "+d.day);
+}
 function drawDining(){
   const wrap=$("diningWrap");
   if(!LEG.dining){
@@ -198,6 +210,7 @@ function drawDining(){
    '<div class="mt"><p class="m">Lunch</p><p class="h">11:30a–2:30p</p><small>board by 2:00</small></div>'+
    '<div class="mt"><p class="m">Dinner</p><p class="h">5:00–9:00p</p><small>board by 8:15 · reserve</small></div>'+
    '</div><p class="sight-note">Meals run on the train\'s local clock, which shifts under you as you cross time zones. On this leg that works out to '+
-   (names.length?('<b>'+names.length+' service'+(names.length>1?"s":"")+'</b>: '+names.join(", ").replace(/, ([^,]*)$/," and $1")):'<b>no full meal service</b>')+
+   (names.length?('<b>'+names.length+' service'+(names.length>1?"s":"")+'</b>: '+
+      mealsByDay().join("; ")):'<b>no full meal service</b>')+
    '. Last call is about 15 minutes before each window closes.</p>';
 }

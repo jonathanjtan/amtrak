@@ -355,8 +355,13 @@ function applyDelay(h){
   else if(mins<0) dv.textContent="~"+(-mins)+" min early";
   else{const H=Math.floor(mins/60),M=mins%60;
     dv.textContent="~"+(H?H+"h ":"")+M+"m late · in "+shortName(LEG.stops[LEG.stops.length-1].name)+" ~"+clockAt(LEG.TOTAL).time;}
+  /* everything that prints a clock time or counts a meal has to follow the delay,
+     not just the strip */
   wallBands(LEG);
   drawTimeline();
+  drawCards();
+  drawSights();
+  drawDining();
   updateTrain();
 }
 $("anchorSet").addEventListener("click",()=>{
