@@ -67,6 +67,9 @@ for p in R["patterns"]:
     full=SHAPE.get(p["shape"])
     codes=[x[0] for x in p["stops"]]
     if full:
+        # some shapes are stored running the other way down the line; snapping stalls unless we flip
+        f0,fl=ST[codes[0]][1],ST[codes[0]][2]
+        if hav(f0,fl,full[-1][0],full[-1][1])<hav(f0,fl,full[0][0],full[0][1]): full=full[::-1]
         anchors=[]
         lo=0
         for c in codes:

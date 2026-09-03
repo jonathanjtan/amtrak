@@ -120,6 +120,42 @@ function fillAnchor(){
     o.textContent=shortName(s.name)+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
 }
 
+/* ================= shareable state ================= */
+/* Stop codes rather than indices, so a link survives a rebuild of the data. */
+function writeURL(){
+  /* opening the saved file locally gives an opaque origin, where replaceState throws.
+     The page has to keep working there, so a failed URL update is not fatal. */
+  try{
+  const q=new URLSearchParams();
+  q.set("t",IT.tr||"");q.set("r",IT.n);
+  q.set("from",IT.s[O][0]);q.set("to",IT.s[E][0]);
+  if(depDate.value)q.set("on",depDate.value);
+  if(carrier!=="verizon")q.set("c",carrier);
+  history.replaceState(null,"",location.pathname+"?"+q.toString());
+  }catch(e){}
+}
+function readURL(){
+  try{
+  const q=new URLSearchParams(location.search);
+  const r=q.get("r"),tr=q.get("t"),from=q.get("from"),to=q.get("to");
+  if(q.get("on")) depDate.value=q.get("on");
+  const c=q.get("c");
+  if(c&&CARRIER_NAME[c]){carrier=c;
+    [...$("carrierCtl").children].forEach(b=>b.classList.toggle("on",b.dataset.carrier===c));}
+  if(!r||!from||!to) return -1;
+  let best=-1;
+  ITS.forEach((it,i)=>{
+    if(it.n!==r) return;
+    const codes=it.s.map(x=>x[0]), a=codes.indexOf(from), b=codes.indexOf(to);
+    if(a<0||b<0||b<=a) return;
+    if(best<0||(tr&&it.tr===tr)) best=i;
+  });
+  if(best<0) return -1;
+  const codes=ITS[best].s.map(x=>x[0]);
+  return {i:best,o:codes.indexOf(from),e:codes.indexOf(to)};
+  }catch(e){ return -1; }
+}
+
 /* ================= assemble ================= */
 function rebuild(){
   LEG=buildLeg();
@@ -135,16 +171,22 @@ function rebuild(){
   applyDelay(+delayEl.value/60);
   if(window.__rebuildLive)window.__rebuildLive();
   updateTrain();
+  writeURL();
+  document.title=shortName(a.name)+" → "+shortName(b.name)+" · Amtrak signal map";
 }
 (function init(){
   document.documentElement.dataset.theme=theme;
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
   const n=new Date();
   depDate.value=n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2)+"-"+("0"+n.getDate()).slice(-2);
-  /* open on the California Zephyr, the route this page started as */
-  let start=ITS.findIndex(it=>it.n==="California Zephyr"&&it.s[0][0]==="EMY");
-  if(start<0) start=0;
-  routeSel.value=start; IT=ITS[start]; fillStops();
+  const fromURL=readURL();
+  if(fromURL!==-1){ routeSel.value=fromURL.i; IT=ITS[fromURL.i]; fillStops(fromURL.o,fromURL.e); }
+  else{
+    /* open on the California Zephyr, the route this page started as */
+    let start=ITS.findIndex(it=>it.n==="California Zephyr"&&it.s[0][0]==="EMY");
+    if(start<0) start=0;
+    routeSel.value=start; IT=ITS[start]; fillStops();
+  }
   rebuild(); setLiveMode();
 })();
 
