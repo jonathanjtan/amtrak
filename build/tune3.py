@@ -9,7 +9,10 @@ sh=[]
 for r in csv.DictReader(open("gtfs/shapes.txt")):
     if r["shape_id"]=="174": sh.append((int(r["shape_pt_sequence"]),float(r["shape_pt_lat"]),float(r["shape_pt_lon"])))
 pts=[(a,b) for _,a,b in sorted(sh)]
-src=open("/Users/jtan/Workspace/amtrak/index.html",encoding="utf-8").read()
+import subprocess
+# the hand-authored coverage this model is fitted against lives in git history
+src=subprocess.run(["git","-C","/Users/jtan/Workspace/amtrak","show","1be12e7:index.html"],
+                   capture_output=True,text=True).stdout
 orig=re.findall(r'\{c:"(\w+)",lng:(-?[\d.]+),lat:([\d.]+)',src)
 m=re.search(r'const covByCarrier=\{(.*?)\n\};',src,re.S).group(1)
 hand={k:[x.strip().strip('"') for x in re.search(k+r':\s*\[(.*?)\]',m,re.S).group(1).split(",") if x.strip()] for k in ("verizon","att","tmobile")}
