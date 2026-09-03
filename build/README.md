@@ -77,6 +77,19 @@ short-turn variants whose stops are a subset of a longer one, so real branches
 (Empire Builder to Seattle vs Portland) survive but 761 Northeast Regional trips
 collapse to 10.
 
+## What is curated by hand
+
+Three things the page asserts are not in any feed and are named in `core.js`:
+
+- `SIGHTS` — the scenery, with a match radius, which way to look and a
+  description. A sight attaches to any route whose track passes within its
+  radius, so adding one is a claim about geography, not about a route.
+- `DINING_ROUTES` and `SIGHTSEER_ROUTES` — which trains carry a dining car, and
+  which of those are Superliner and so have the glass-roofed Sightseer Lounge.
+  GTFS says nothing about equipment, and trip length is a bad proxy: one
+  Northeast Regional is scheduled for seventeen hours with only a café counter.
+- The three long tunnels in the coverage model, below.
+
 ## The coverage model
 
 Coverage is estimated, not measured. For each sub-segment midpoint:
