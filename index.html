@@ -1665,9 +1665,15 @@ function updateAgenda(t){
     '<p class="ag-stamp">'+c.full+' · '+fmtDur(t)+' in · '+fmtDur(LEG.TOTAL-t)+' to '+stopName(LEG.stops.length-1)+'</p>'+
     '<div class="ag-rows" id="agRows"></div>';
   const rows=[], nx=run.t1<LEG.TOTAL-1e-6?covAt(run.t1+1e-6):null;
+  /* standing on the boundary of a run, "holds about 0m" says nothing; the
+     honest reading is that it is changing under you right now */
+  const left=run.t1-t, ending=left<1/60;
   rows.push(["Signal",st==="dead"
-    ?'No service · <em>about '+fmtDur(run.t1-t)+' left'+(nx?', '+STAT[nx].toLowerCase()+' again ~'+clockAt(run.t1).time+' near '+stopName(stopIndexAt(run.t1)+1):'')+'</em>'
-    :STAT[st]+' on '+CARRIER_NAME[carrier]+' · <em>holds about '+fmtDur(run.t1-t)+(nx?', then '+STAT[nx].toLowerCase()+' from ~'+clockAt(run.t1).time:'')+'</em>']);
+    ?(ending?('No service · <em>'+(nx?(STAT[nx].toLowerCase()+' from about now near '+stopName(stopIndexAt(run.t1)+1)):'ending about now')+'</em>')
+            :('No service · <em>about '+fmtDur(left)+' left'+(nx?', '+STAT[nx].toLowerCase()+' again ~'+clockAt(run.t1).time+' near '+stopName(stopIndexAt(run.t1)+1):'')+'</em>'))
+    :STAT[st]+' on '+CARRIER_NAME[carrier]+' · <em>'+
+      (ending?(nx?(({good:"coming back",spotty:"turning spotty",dead:"dropping out"})[nx]+' about now'):'to the end of this leg')
+             :('holds about '+fmtDur(left)+(nx?', then '+STAT[nx].toLowerCase()+' from ~'+clockAt(run.t1).time:'')))+'</em>']);
   const dk=nightAt(t),nd=nextDark(t);
   rows.push(["Outside",dk
     ?(dk.b>=LEG.TOTAL-1e-6 ? 'Dark · <em>and stays dark to the end of this leg</em>'
