@@ -67,11 +67,7 @@ const clockMin=(it,idx)=>{
   const hm=it.dep.split(":").map(Number);
   return ((hm[0]*60+hm[1]+it.s[idx][1])%1440+1440)%1440;
 };
-const startWeekday=()=>{
-  const v=depDate.value; if(!v) return 0;
-  const p=v.split("-").map(Number);
-  return (new Date(p[0],p[1]-1,p[2]).getDay()+6)%7;      /* 0 = Monday */
-};
+const startWeekday=()=>weekdayOf(depDate.value);
 /* Walk the legs in order from a starting weekday, returning each wait. */
 function chainWaits(legs){
   let wd=startWeekday(), clock=clockMin(ITS[legs[0].i],legs[0].o), waits=[];

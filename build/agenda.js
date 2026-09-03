@@ -34,6 +34,26 @@ function agEvents(){
   }
   return ev.sort((a,b)=>a.t-b.t||a.pri-b.pri);
 }
+/* Where the current leg sits in a multi-leg journey, if it is part of one */
+function journeyLegContext(){
+  const J=journey; if(!J||!J.list||!J.list[J.pick]) return null;
+  const opt=J.list[J.pick], i=J.leg-1;
+  if(i<0||i>=opt.legs.length-1) return null;          /* last leg hands off to nothing */
+  const leg=opt.legs[i];
+  if(ITS[leg.i]!==IT||leg.o!==O||leg.e!==E) return null;
+  const next=opt.legs[i+1], wait=opt.waits[i];
+  /* The connecting train leaves on its own schedule whatever your delay, so
+     work from the booked arrival and measure the slack against the real one.
+     Shown in the interchange's clock: Chicago reads 6:40p where the feed's
+     Eastern timetable says 7:40p. */
+  const schedArr=new Date(LEG.dep.getTime()+LEG.TOTAL*3600000);
+  const dep=new Date(schedArr.getTime()+wait*60000);
+  const realArr=new Date(LEG.dep.getTime()+(LEG.TOTAL+DELAY)*3600000);
+  const slack=(dep-realArr)/60000;
+  const tz=TZ[ST[opt.vias[i]][3]];
+  return {via:opt.vias[i],wait:wait,slack:slack,nextName:ITS[next.i].n,
+          nextDays:runDays(ITS[next.i]),depTime:fmtLocal(dep,tz).time};
+}
 function agTipList(t){
   const tips=[],CN=CARRIER_NAME[carrier],run=covRun(t),
         add=(ic,html,hot)=>tips.push({ic:ic,html:html,hot:!!hot});
@@ -63,6 +83,22 @@ function agTipList(t){
     const i=LEG.stops.indexOf(st), dw=IT.s[O+i][2]||0;
     if(st.t-t<=0.6&&dw>=10)
       add("▮",'<b>'+shortName(st.name)+' in ~'+fmtDur(st.t-t)+'.</b> About '+dw+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
+  }
+  /* on a leg that hands you to another train, the change is the thing to know */
+  const cx=(typeof journey!=="undefined"&&journey)?journeyLegContext():null;
+  if(cx&&LEG.TOTAL-t<=Math.max(2,LEG.TOTAL/8)){
+    const where=shortName(stationName(cx.via));
+    if(cx.slack<=0)
+      add("⇄",'<b>You would miss the change at '+where+'.</b> The '+cx.nextName+
+        ' leaves at ~'+cx.depTime+', before this train gets in. '+
+        (cx.nextDays.length>=7?'The next one is a day later.'
+                              :'It only runs '+listDays(cx.nextDays)+'.'),true);
+    else if(cx.slack<MIN_CONNECT)
+      add("⇄",'<b>Tight change at '+where+'.</b> The '+cx.nextName+' leaves at ~'+cx.depTime+
+        ', '+Math.round(cx.slack)+' minutes after you get in.',true);
+    else
+      add("⇄",'<b>Change at '+where+'.</b> The '+cx.nextName+' leaves at ~'+cx.depTime+
+        ', '+fmtDur(cx.slack/60)+' after you get in.',cx.slack<=90);
   }
   if(dark) add("☾",'<b>Dark out.</b> Daylight ~'+clockAt(dark.b).time+'.'+(covRun(t).st==="dead"?' The dead stretch runs through it, so this is the part to sleep through.':''));
   else if(nd&&nd-t<=1.2) add("☾",'<b>Dark in ~'+fmtDur(nd-t)+'.</b> Charge at the seat outlet while there is nothing to look at.');

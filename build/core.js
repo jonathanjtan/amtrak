@@ -25,11 +25,15 @@ const LONG={g:"good",s:"spotty",d:"dead"};
    and the Texas Eagle's through cars to Los Angeles likewise. */
 const DAY3=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const runDays=it=>DAY3.filter((d,i)=>(it.dy||"1111111")[i]==="1");
+/* Monday-based weekday, to index the seven running-day flags */
+function weekdayOf(dateStr){
+  if(!dateStr) return 0;
+  const p=dateStr.split("-").map(Number);
+  return (new Date(p[0],p[1]-1,p[2]).getDay()+6)%7;
+}
 function runsOn(it,dateStr){
   if(!dateStr) return true;
-  const p=dateStr.split("-").map(Number);
-  const wd=(new Date(p[0],p[1]-1,p[2]).getDay()+6)%7;     /* 0 = Monday */
-  return ((it.dy||"1111111")[wd]==="1");
+  return ((it.dy||"1111111")[weekdayOf(dateStr)]==="1");
 }
 const listDays=a=>a.length>1?a.slice(0,-1).join(", ")+" and "+a[a.length-1]:a[0];
 /* The feed's names are inconsistent for a few big stations, and three Boston
