@@ -300,7 +300,16 @@ origIn.addEventListener("change",()=>repick());
 destIn.addEventListener("change",()=>repick());
 routeSel.addEventListener("change",applyChoice);
 $("swapBtn").addEventListener("click",()=>{
-  const a=origIn.value; origIn.value=destIn.value; destIn.value=a;
+  /* while a journey is on screen, reverse the journey rather than the one leg
+     of it you happen to be looking at */
+  if(journey){
+    const a=journey.a, b=journey.b;
+    journey=null;
+    origIn.value=stopLabel(b); destIn.value=stopLabel(a);
+    repick();
+    return;
+  }
+  const v=origIn.value; origIn.value=destIn.value; destIn.value=v;
   repick();
 });
 document.getElementById("carrierCtl").addEventListener("click",e=>{
