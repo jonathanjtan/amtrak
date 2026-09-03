@@ -36,6 +36,12 @@ outputs there; only `assemble.sh` touches the repository, and it takes the
 path to `data.json`. Nothing has a path baked into it, so the tree can live
 anywhere.
 
+One thing the scripts do not set: `FEED_WEEK` at the top of `core.js`, the week
+the snapshot describes. Update it when you rebuild `data.json`. Both the footer
+sentence and the warning shown when someone picks a date more than two months
+away are generated from it, so they cannot drift apart, but neither can know
+the feed has moved on unless you say so.
+
 To change only the stylesheet or the scripts, run `build/assemble.sh` with no
 argument: it reuses the data already embedded in `index.html`, so none of the
 source feeds are needed.
