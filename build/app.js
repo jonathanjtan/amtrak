@@ -563,6 +563,7 @@ function remember(){
        trip you were planning rather than its first leg */
     localStorage.setItem(STORE,JSON.stringify(journey
       ? {j:1,from:journey.a,to:journey.b,on:journey.start||depDate.value,
+         pick:journey.pick,leg:journey.leg,
          c:carrier,theme:theme,dly:Math.round(DELAY*60)}
       : {r:IT.n,t:IT.tr,from:IT.s[O][0],to:IT.s[E][0],
          on:depDate.value,c:carrier,theme:theme,dly:Math.round(DELAY*60)}));
@@ -628,6 +629,17 @@ function applySaved(){
   if(v.j){                                  /* a saved multi-leg journey */
     origIn.value=stopLabel(v.from); destIn.value=stopLabel(v.to);
     repick();
+    /* come back to the leg you were reading, not to leg one. The options are
+       planned afresh on load and the day may have moved, so take the saved
+       position only if it still points at something. */
+    if(journey&&v.pick>=0&&v.pick<journey.list.length){
+      const opt=journey.list[v.pick];
+      if(v.leg>=1&&v.leg<=opt.legs.length){
+        journey.pick=v.pick; journey.leg=v.leg;
+        drawJourney();
+        loadLeg(opt.legs[v.leg-1],(opt.offsets&&opt.offsets[v.leg-1])||0);
+      }
+    }
     return !!LEG;
   }
   let idx=-1;
