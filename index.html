@@ -1530,7 +1530,9 @@ function connectionsFor(a,b){
     if(!w||v.i===w.i) return;
     one.push(withWaits([x],[v,w]));
   });
-  if(one.length){ one.sort((p,q)=>p.total-q.total); return dedupe(one,3); }
+  /* a journey that cannot start on the chosen day is not the quickest one */
+  const startsToday=c=>runsOn(ITS[c.legs[0].i],depDate.value)?0:1;
+  if(one.length){ one.sort((p,q)=>startsToday(p)-startsToday(q)||p.total-q.total); return dedupe(one,3); }
   /* nothing direct enough: allow a middle train between two interchanges */
   const two=[];
   ITS.forEach((it,i)=>{
@@ -1550,7 +1552,7 @@ function connectionsFor(a,b){
     }
     if(best) two.push(best);
   });
-  two.sort((p,q)=>p.total-q.total);
+  two.sort((p,q)=>startsToday(p)-startsToday(q)||p.total-q.total);
   return dedupe(two,2);
 }
 let journey=null;                          /* a multi-leg journey being explored */
