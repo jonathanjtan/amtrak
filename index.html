@@ -1740,6 +1740,7 @@ function applyDelay(h){
   drawSights();
   drawDining();
   updateTrain();
+  remember();
 }
 $("anchorSet").addEventListener("click",()=>{
   const i=+$("anchorStop").value, tv=$("anchorTime").value; if(!tv) return;
@@ -1765,16 +1766,17 @@ function remember(){
   try{
     localStorage.setItem(STORE,JSON.stringify({
       r:IT.n,t:IT.tr,from:IT.s[O][0],to:IT.s[E][0],
-      on:depDate.value,c:carrier,theme:theme}));
+      on:depDate.value,c:carrier,theme:theme,dly:Math.round(DELAY*60)}));
   }catch(e){}
 }
 function recall(){
   try{
     const v=JSON.parse(localStorage.getItem(STORE)||"null");
     if(!v||!v.from||!v.to) return null;
-    /* a saved date in the past is worse than today's, so let it go */
+    /* a saved date in the past is worse than today's, so let it go, and with it
+       any delay, which belonged to that trip and not this one */
     const t0=todayStr();
-    if(!v.on||v.on<t0) v.on=t0;
+    if(!v.on||v.on<t0){ v.on=t0; v.dly=0; }
     return v;
   }catch(e){ return null; }
 }
@@ -1800,6 +1802,10 @@ function applySaved(){
   const v=recall();
   if(!v) return false;
   if(v.on) depDate.value=v.on;
+  if(v.dly&&isFinite(v.dly)){
+    const m=Math.max(-30,Math.min(360,v.dly));
+    delayEl.value=m; DELAY=m/60;
+  }
   if(v.c&&CARRIER_NAME[v.c]){
     carrier=v.c;
     [...$("carrierCtl").children].forEach(b=>{
