@@ -70,7 +70,8 @@ function coverageSummary(){
   const el=$("covSummary");
   const CN=CARRIER_NAME[carrier];
   if(tot.dead<0.05&&tot.spotty<0.05){
-    el.innerHTML="<b>"+CN+" holds the whole way</b> on this model, all "+fmtDur(LEG.TOTAL)+" of it.";
+    el.innerHTML="<b>"+CN+" holds the whole way</b> on this model, all "+fmtDur(LEG.TOTAL)+
+      " of it. "+compareCarriers();
     return;
   }
   const bits=[];
@@ -79,8 +80,20 @@ function coverageSummary(){
   if(tot.dead>0.05) bits.push("dead for <b>"+fmtDur(tot.dead)+"</b>");
   const last=bits.pop();
   el.innerHTML="Of "+fmtDur(LEG.TOTAL)+" on <b>"+CN+"</b>: "+bits.join(", ")+(bits.length?" and ":"")+last+". "+
-    (tot.dead>0.05?("That is about "+pctD+"% of the trip with nothing at all."):
-     (pctS>0?("About "+pctS+"% of it is patchy."):""));
+    (tot.dead>0.05?("That is about "+pctD+"% of the trip with nothing at all. "):
+     (pctS>0?("About "+pctS+"% of it is patchy. "):""))+compareCarriers();
+}
+/* The comparison the page exists to make, without clicking through all three */
+function compareCarriers(){
+  const rows=Object.keys(CARRIER_NAME).map(c=>{
+    const t=carrierTotals(c);
+    return {c:c,name:CARRIER_NAME[c],dead:t.dead,pct:Math.round(t.dead/(LEG.TOTAL||1)*100)};
+  }).sort((a,b)=>a.dead-b.dead);
+  if(rows.every(r=>r.dead<0.05)) return "All three carriers hold up here.";
+  const same=rows.every(r=>r.pct===rows[0].pct);
+  if(same) return "All three lose it for about the same stretch.";
+  const parts=rows.map(r=>"<b>"+r.name+"</b> "+(r.dead<0.05?"none":fmtDur(r.dead)));
+  return "Dead time by carrier: "+parts.join(", ")+".";
 }
 function drawCards(){
   const cards=$("cards"); cards.innerHTML="";

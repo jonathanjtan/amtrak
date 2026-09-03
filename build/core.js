@@ -262,6 +262,19 @@ function wallBands(L){
   const FULL={Breakfast:3,Lunch:3,Dinner:4};
   L.meals=L.meals.filter(m=>(m.b-m.a)>=Math.min(1.5,FULL[m.name]*0.5));
 }
+/* Dead and spotty hours on this leg for a carrier other than the selected one,
+   using the same sub-segment spans. */
+function carrierTotals(car){
+  const cv=IT.cv[car], out={good:0,spotty:0,dead:0};
+  let base=0;
+  for(let i=0;i<O;i++) base+=IT.sn[i];
+  for(let i=O;i<E;i++){
+    const n=IT.sn[i], t0=LEG.stops[i-O].t, t1=LEG.stops[i-O+1].t, span=(t1-t0)/n;
+    for(let k=0;k<n;k++) out[LONG[cv[base+k]]]+=span;
+    base+=n;
+  }
+  return out;
+}
 function posAt(t,L){
   L=L||LEG; const P=L.poly,T=L.polyT;
   if(t<=T[0])return {lat:P[0][0],lng:P[0][1],i:0};
