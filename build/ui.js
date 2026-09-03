@@ -106,9 +106,28 @@ function compareCarriers(){
   const parts=rows.map(r=>"<b>"+r.name+"</b> "+(r.dead<0.05?"none":fmtDur(r.dead)));
   return "Dead time by carrier: "+parts.join(", ")+".";
 }
+/* The cards say where signal dies. The complement is the question people
+   actually ask: when can I take a call? */
+function usableWindows(){
+  const runs=[]; let i=0;
+  const c=covRuns();
+  while(i<c.length){
+    if(c[i].st==="good"){ runs.push({t0:c[i].t0,t1:c[i].t1}); }
+    i++;
+  }
+  runs.sort((a,b)=>(b.t1-b.t0)-(a.t1-a.t0));
+  const el=$("goodWindows");
+  if(!el) return;
+  const worth=runs.filter(r=>r.t1-r.t0>=0.75).slice(0,3).sort((a,b)=>a.t0-b.t0);
+  if(!worth.length||LEG.TOTAL<1.5){ el.textContent=""; return; }
+  if(worth.length===1&&worth[0].t1-worth[0].t0>=LEG.TOTAL-0.05){ el.textContent=""; return; }
+  el.innerHTML="Longest usable windows: "+
+    worth.map(r=>"<b>"+fmtDur(r.t1-r.t0)+"</b> from "+clockAt(r.t0).time+" "+clockAt(r.t0).day).join(", ")+".";
+}
 function drawCards(){
   const cards=$("cards"); cards.innerHTML="";
   coverageSummary();
+  usableWindows();
   const runs=[];let i=0;
   while(i<LEG.cov.length){
     let j=i; while(j+1<LEG.cov.length&&LEG.cov[j+1].st===LEG.cov[i].st) j++;

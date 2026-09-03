@@ -120,6 +120,8 @@
     padding:1px 5px;border-radius:4px;}
   .cov-sum{font-size:13px;color:var(--muted);line-height:1.5;margin:-4px 0 4px;max-width:68ch;}
   .cov-sum b{color:var(--paper);font-weight:600;}
+  .good-windows{margin-top:-2px;}
+  .good-windows:empty{display:none;}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(216px,1fr));gap:12px;margin-top:22px;}
   .dz{background:var(--ink-2);border:1px solid var(--rail);border-radius:10px;padding:13px 15px;transition:background .25s;}
   .dz .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 4px;}
