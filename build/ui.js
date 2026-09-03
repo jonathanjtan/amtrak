@@ -91,11 +91,18 @@ function coverageSummary(){
 function compareCarriers(){
   const rows=Object.keys(CARRIER_NAME).map(c=>{
     const t=carrierTotals(c);
-    return {c:c,name:CARRIER_NAME[c],dead:t.dead,pct:Math.round(t.dead/(LEG.TOTAL||1)*100)};
-  }).sort((a,b)=>a.dead-b.dead);
-  if(rows.every(r=>r.dead<0.05)) return "All three carriers hold up here.";
-  const same=rows.every(r=>r.pct===rows[0].pct);
-  if(same) return "All three lose it for about the same stretch.";
+    return {c:c,name:CARRIER_NAME[c],dead:t.dead,spotty:t.spotty,
+            pct:Math.round(t.dead/(LEG.TOTAL||1)*100)};
+  }).sort((a,b)=>a.dead-b.dead||a.spotty-b.spotty);
+  const noDead=rows.every(r=>r.dead<0.05);
+  if(noDead&&rows.every(r=>r.spotty<0.05)) return "All three carriers hold up here.";
+  if(noDead){
+    /* nobody loses it outright, so the honest comparison is the patchy time */
+    const worst=rows[rows.length-1];
+    return "None of the three drop out entirely; <b>"+worst.name+"</b> is the patchiest at "+
+           fmtDur(worst.spotty)+".";
+  }
+  if(rows.every(r=>r.pct===rows[0].pct)) return "All three lose it for about the same stretch.";
   const parts=rows.map(r=>"<b>"+r.name+"</b> "+(r.dead<0.05?"none":fmtDur(r.dead)));
   return "Dead time by carrier: "+parts.join(", ")+".";
 }

@@ -18,7 +18,7 @@ page keeps working with no signal at all, which is the point.
 ## What it knows
 
 - **Coverage**, estimated for Verizon, AT&T and T-Mobile, with the totals
-  stated plainly: the Zephyr is dead for 9h 36m on Verizon and 21h 33m on
+  stated plainly: the Zephyr is dead for about 10 hours on Verizon and 22 on
   T-Mobile.
 - **Times**, local to the train's own position, shifting as it crosses zones,
   and correct across daylight-saving changes, which every long-distance train

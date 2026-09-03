@@ -111,7 +111,7 @@ for p in R["patterns"]:
             simp[0]=(ST[codes[i]][1],ST[codes[i]][2]); simp[-1]=(ST[codes[i+1]][1],ST[codes[i+1]][2])
             poly.extend([[round(a,4),round(b,4)] for a,b in simp[1:]]); idx.append(len(poly)-1)
             tr,km=turnrate(raw); seglen.append(round(km,1))
-            n=max(1,min(10,int(round(km/25.0))))
+            n=max(1,min(60,int(round(km/25.0))))   # long nonstop legs deserve real resolution
             segn.append(n)
             for k in range(n):
                 a=raw[int(len(raw)*k/n)]; b=raw[min(len(raw)-1,int(len(raw)*(k+1)/n))]
@@ -128,7 +128,7 @@ for p in R["patterns"]:
         for i in range(len(codes)-1):
             a=ST[codes[i]]; b=ST[codes[i+1]]
             km=hav(a[1],a[2],b[1],b[2]); seglen.append(round(km,1))
-            n=max(1,min(10,int(round(km/25.0)))); segn.append(n)
+            n=max(1,min(60,int(round(km/25.0)))); segn.append(n)
             for k in range(n):
                 f0=(k+0.5)/n
                 mlat=a[1]+(b[1]-a[1])*f0; mlng=a[2]+(b[2]-a[2])*f0

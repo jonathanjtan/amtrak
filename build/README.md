@@ -38,6 +38,10 @@ Two GTFS details the build depends on:
   stations to the track stalls unless the shape is flipped first. Detected by
   comparing the first stop's distance to each end.
 
+Coverage is sampled roughly every 25 km, so a long nonstop leg gets real
+resolution rather than a fixed handful of samples: the Auto Train's single
+1,377 km run is 55 spans, not 10.
+
 `build_pat.py` keeps one itinerary per terminal pair per direction, dropping
 short-turn variants whose stops are a subset of a longer one, so real branches
 (Empire Builder to Seattle vs Portland) survive but 761 Northeast Regional trips
