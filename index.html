@@ -538,7 +538,9 @@ const listDays=a=>a.length>1?a.slice(0,-1).join(", ")+" and "+a[a.length-1]:a[0]
    stops share one name; these are display fixes, not new data. */
 const NAME_FIX={NYP:"New York Penn Station",BOS:"Boston South Station",BBY:"Boston Back Bay",
   BON:"Boston North Station",WAS:"Washington Union Station",PHL:"Philadelphia 30th Street",
-  NHV:"New Haven Union Station",STS:"New Haven State Street"};
+  NHV:"New Haven Union Station",STS:"New Haven State Street",
+  /* the timetable and every rider call these what follows; the feed does not */
+  ABQ:"Albuquerque",BWI:"BWI Thurgood Marshall Airport"};
 /* extra words people are likely to type */
 const ALIAS={NYP:"nyc new york city penn moynihan",WAS:"dc washington",LAX:"los angeles la union",
   CHI:"chicago union",EMY:"emeryville san francisco bay",SFC:"san francisco",PDX:"portland oregon",
@@ -552,18 +554,22 @@ const searchKey=c=>(stationName(c)+" "+(ST[c][4]||"")+" "+c+" "+(ALIAS[c]||"")).
    as Chicago. But nineteen names on the network belong to more than one town —
    Portland OR and Portland ME, Springfield IL and MA, three Burlingtons — and
    for those the state is the whole point, so it stays. */
-const bareName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"").trim();
-const AMBIG=(()=>{
-  const n={},seen={},amb=new Set();
-  ITS.forEach(it=>it.s.forEach(x=>{const c=x[0];
-    if(seen[c]||!ST[c])return; seen[c]=1;
-    const b=bareName(stationName(c)); n[b]=(n[b]||0)+1;}));
-  for(const b in n) if(n[b]>1) amb.add(b);
-  return amb;
+const bareName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"")
+  .replace(/ Union.*/,"").replace(/ (Regional )?Transportation Center$/,"").trim();
+const PLACE=(()=>{
+  const codes=[...new Set([].concat.apply([],ITS.map(it=>it.s.map(x=>x[0]))))].filter(c=>ST[c]);
+  const bare={},n1={},lvl={},n2={},out={};
+  codes.forEach(c=>{const b=bareName(stationName(c)); bare[c]=b; n1[b]=(n1[b]||0)+1;});
+  /* shared name: add the state */
+  codes.forEach(c=>{const l=(n1[bare[c]]>1&&ST[c][4])?bare[c]+", "+ST[c][4]:bare[c];
+    lvl[c]=l; n2[l]=(n2[l]||0)+1;});
+  /* still shared: two stations in one city, and only the code tells them apart.
+     Burbank has a downtown stop and an airport stop, and the feed names both
+     of them Burbank. */
+  codes.forEach(c=>{out[c]=n2[lvl[c]]>1?lvl[c]+" ("+c+")":lvl[c];});
+  return out;
 })();
-const shortName=(name,state)=>{const b=bareName(name);
-  return (state&&AMBIG.has(b))?b+", "+state:b;};
-const place=c=>shortName(stationName(c),ST[c]&&ST[c][4]);
+const place=c=>PLACE[c]||bareName(stationName(c));
 
 
 /* ---------- time zones ---------- */
@@ -1458,6 +1464,18 @@ function agTipList(t){
   else if(nd&&nd-t<=1.2) add("☾",'<b>Dark in ~'+fmtDur(nd-t)+'.</b> Charge at the seat outlet while there is nothing to look at.');
   return tips.slice(0,4);
 }
+/* The servicing stops are the part of the timetable nobody reads and everybody
+   wants: fifty minutes on the platform at Albuquerque is lunch, a walk and a
+   reliable upload. Every long stop on the network turns out to have signal —
+   they are all in towns — so this is worth knowing before you board. */
+function longStopTip(){
+  const big=LEG.stops.map((s,k)=>({s:s,dw:IT.s[O+k][2]||0}))
+    .filter(x=>x.dw>=15).sort((a,b)=>b.dw-a.dw).slice(0,2).sort((a,b)=>a.s.t-b.s.t);
+  if(!big.length) return [];
+  return [{ic:"▮",html:'<b>'+(big.length>1?'Long stops':'One long stop')+':</b> '+
+    big.map(x=>x.s.short+' '+x.dw+' min at '+clockAt(x.s.t).time).join(", ")+
+    '. Long enough to get off, stretch, and send whatever has been waiting.'}];
+}
 function updateAgenda(t){
   if(t===undefined)t=computeTNow();
   const pal=covColors();
@@ -1492,7 +1510,8 @@ function updateAgenda(t){
       {ic:"▨",html:LEG.dining?('<b>'+(LEG.meals[0]?LEG.meals[0].name:"The first meal")+' is your first service.</b> In a sleeper, book dinner with your car attendant once you board.')
                             :'<b>Café car only</b> on a run this length. Bring your own food if you want more than snacks.'},
       {ic:"◉",html:LEG.sights.length?('<b>'+LEG.sights.length+' scenery highlight'+(LEG.sights.length>1?"s":"")+'</b> on this leg, starting with '+LEG.sights[0].n+'. The Sightseer Lounge sees both sides.')
-                                   :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]);
+                                   :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]
+      .concat(longStopTip()));
     return;
   }
   if(t>=LEG.TOTAL){

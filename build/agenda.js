@@ -112,6 +112,18 @@ function agTipList(t){
   else if(nd&&nd-t<=1.2) add("☾",'<b>Dark in ~'+fmtDur(nd-t)+'.</b> Charge at the seat outlet while there is nothing to look at.');
   return tips.slice(0,4);
 }
+/* The servicing stops are the part of the timetable nobody reads and everybody
+   wants: fifty minutes on the platform at Albuquerque is lunch, a walk and a
+   reliable upload. Every long stop on the network turns out to have signal —
+   they are all in towns — so this is worth knowing before you board. */
+function longStopTip(){
+  const big=LEG.stops.map((s,k)=>({s:s,dw:IT.s[O+k][2]||0}))
+    .filter(x=>x.dw>=15).sort((a,b)=>b.dw-a.dw).slice(0,2).sort((a,b)=>a.s.t-b.s.t);
+  if(!big.length) return [];
+  return [{ic:"▮",html:'<b>'+(big.length>1?'Long stops':'One long stop')+':</b> '+
+    big.map(x=>x.s.short+' '+x.dw+' min at '+clockAt(x.s.t).time).join(", ")+
+    '. Long enough to get off, stretch, and send whatever has been waiting.'}];
+}
 function updateAgenda(t){
   if(t===undefined)t=computeTNow();
   const pal=covColors();
@@ -146,7 +158,8 @@ function updateAgenda(t){
       {ic:"▨",html:LEG.dining?('<b>'+(LEG.meals[0]?LEG.meals[0].name:"The first meal")+' is your first service.</b> In a sleeper, book dinner with your car attendant once you board.')
                             :'<b>Café car only</b> on a run this length. Bring your own food if you want more than snacks.'},
       {ic:"◉",html:LEG.sights.length?('<b>'+LEG.sights.length+' scenery highlight'+(LEG.sights.length>1?"s":"")+'</b> on this leg, starting with '+LEG.sights[0].n+'. The Sightseer Lounge sees both sides.')
-                                   :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]);
+                                   :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]
+      .concat(longStopTip()));
     return;
   }
   if(t>=LEG.TOTAL){
