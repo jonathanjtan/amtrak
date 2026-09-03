@@ -262,7 +262,12 @@
 
 
   /* route picker */
-  .picker{display:grid;grid-template-columns:1fr auto 1fr minmax(190px,1.3fr) auto;gap:10px;align-items:end;margin:0 0 8px;}
+  /* The service names carry the most text by a distance — the running days and
+     the off-network hours on top of the name and the duration — so they get a
+     row rather than a quarter of one, where every option clipped. */
+  .picker{display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:end;margin:0 0 8px;}
+  .picker>.pk:nth-child(4){order:5;grid-column:1/-1;}   /* service */
+  .picker>.pk:nth-child(5){order:4;}                    /* date */
   .swap-txt{display:none;}
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
