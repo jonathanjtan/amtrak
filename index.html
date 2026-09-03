@@ -1795,17 +1795,27 @@ function loadLeg(c,dayOffset){
   if(list.length) fillRouteSel(list,c.i+":"+c.o+":"+c.e);
   applyChoice();
 }
+/* Where two trains cover the same pair by different tracks the slower one is
+   sometimes the connected one — Chicago to Washington is 18h with four hours
+   dark on the Floridian, or 24h with three on the Cardinal. Said only when
+   there is something to say: on the Corridor every option is zero. */
+function labelRoutes(){
+  [...routeSel.options].forEach(o=>{
+    const p=o.value.split(":").map(Number), it=ITS[p[0]], days=runDays(it);
+    const dead=legHours(p[0],p[1],p[2],carrier).dead;
+    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur((it.s[p[2]][1]-it.s[p[1]][1])/60)+
+      (days.length<7?" · "+days.join("/"):"")+
+      (dead>=0.25?" · "+fmtDur(dead)+" off the network":"");
+  });
+}
 function fillRouteSel(list,keep){
   routeSel.innerHTML="";
   list.forEach(c=>{
-    const it=ITS[c.i];
     const o=document.createElement("option");
     o.value=c.i+":"+c.o+":"+c.e;
-    const days=runDays(it);
-    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur(c.mins/60)+
-      (days.length<7?" · "+days.join("/"):"");
     routeSel.appendChild(o);
   });
+  labelRoutes();
   routeSel.value=keep||list[0].value||(list[0].i+":"+list[0].o+":"+list[0].e);
   if(!routeSel.value) routeSel.value=list[0].i+":"+list[0].o+":"+list[0].e;
 }
@@ -1858,7 +1868,8 @@ document.getElementById("carrierCtl").addEventListener("click",e=>{
     x.setAttribute("aria-pressed",String(x===b));
   });
   rebuild();
-  drawJourney();      /* the dead time on each journey option is carrier-specific */
+  /* the off-network time on the options is carrier-specific, so relabel both */
+  labelRoutes(); drawJourney();
 });
 $("copyBtn").addEventListener("click",()=>{
   const b=$("copyBtn"), url=location.href;
