@@ -26,10 +26,14 @@ function drawTimeline(){
   LEG.meals.forEach(m=>{
     const d=document.createElement("div");d.className="meal";
     d.style.left=pct(m.a)+"%";d.style.width=(pct(m.b)-pct(m.a))+"%";
-    d.textContent=m.name[0];d.title=m.name+" · dining car";mealsEl.appendChild(d);
+    d.textContent=m.name[0];d.title=m.name+" · dining car";
+    d.addEventListener("click",()=>{ if(typeof seekTo==="function") seekTo(m.a); });
+    mealsEl.appendChild(d);
   });
   LEG.sights.forEach(s=>{
-    const d=document.createElement("div");d.className="sstar";d.style.left=pct(s.t)+"%";d.title=s.n;
+    const d=document.createElement("div");d.className="sstar";d.style.left=pct(s.t)+"%";
+    d.title=s.n+" · "+lookText(s);
+    d.addEventListener("click",()=>{ if(typeof seekTo==="function") seekTo(s.t); });
     d.innerHTML='<svg width="15" height="10" viewBox="-7 -5 14 10" aria-hidden="true"><path d="M-6 0 C-3 -4 3 -4 6 0 C3 4 -3 4 -6 0 Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle r="1.8" fill="currentColor"/></svg>';
     sstars.appendChild(d);
   });

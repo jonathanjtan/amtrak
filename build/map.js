@@ -85,6 +85,10 @@ function drawMap(){
     gg.appendChild(el("path",{d:EYE,class:"eye-out"}));
     gg.appendChild(el("circle",{r:1.9,class:"eye-pupil"}));
     gg.setAttribute("transform","translate("+x+" "+y+")");
+    gg.style.cursor="pointer";
+    gg.appendChild(el("title",{})).textContent=s.n+" · "+lookText(s);
+    gg.addEventListener("click",ev=>{ev.stopPropagation();
+      if(typeof seekTo==="function") seekTo(s.t);});
     vp.appendChild(gg); regGroup(gg,x,y,1.05,1);
     const lb=el("text",{x:x,y:y-9.5,class:"scenic-lbl","text-anchor":"middle"});
     lb.textContent=s.n.replace(/ &.*/,"").replace(/ at .*/,"").replace(/ descent.*/,"");

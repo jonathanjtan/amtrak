@@ -135,7 +135,7 @@
   .eye-pupil{fill:var(--scenic);}
   html[data-layer="terrain"][data-imgoff="0"] .eye-bg,html[data-layer="satellite"][data-imgoff="0"] .eye-bg{stroke:rgba(0,0,0,.5);stroke-width:3.4;}
   .sstars{position:relative;height:16px;margin:0 0 3px;}
-  .sstar{position:absolute;top:50%;transform:translate(-50%,-50%);color:var(--scenic);font-size:11px;line-height:1;pointer-events:none;}
+  .sstar{position:absolute;top:50%;transform:translate(-50%,-50%);color:var(--scenic);font-size:11px;line-height:1;cursor:pointer;}
   .sights{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:12px;margin:0 0 4px;}
   .sights-day{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--paper);font-weight:700;display:flex;align-items:center;gap:10px;margin:20px 0 10px;}
@@ -152,7 +152,7 @@
   .sight-note{font-size:12px;color:var(--muted);margin:14px 2px 0;line-height:1.55;}
   .sight-note b{color:var(--paper);font-weight:600;}
   .meals{position:relative;height:16px;margin:3px 0 4px;}
-  .meal{position:absolute;top:0;height:14px;border-radius:4px;background:var(--dine);display:flex;align-items:center;
+  .meal{cursor:pointer;position:absolute;top:0;height:14px;border-radius:4px;background:var(--dine);display:flex;align-items:center;
     justify-content:center;color:#0b1016;font-family:ui-monospace,Menlo,monospace;font-size:9px;font-weight:700;letter-spacing:.04em;overflow:hidden;}
   html[data-theme="light"] .meal{color:#fff;}
   .tl-cap{display:flex;flex-wrap:wrap;gap:6px 18px;margin:9px 2px 0;font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;}
