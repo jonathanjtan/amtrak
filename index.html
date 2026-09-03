@@ -281,6 +281,8 @@
   .pk select:focus-visible,.pk input:focus-visible{outline:2px solid var(--focus);outline-offset:1px;}
   .pk-swap button{padding:9px 13px;}
   .pk input:invalid{border-color:var(--dead);}
+  .noscript{border:1px solid var(--rail);border-left:3px solid var(--accent);border-radius:10px;
+    padding:12px 14px;margin:0 0 18px;color:var(--paper);font-size:13.5px;line-height:1.5;max-width:66ch;}
   .tagline{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0 0 20px;max-width:66ch;}
   .ctl-right{display:flex;gap:8px;flex-wrap:wrap;}
   .pk-msg{font-size:12px;color:var(--accent);margin:0 0 14px;min-height:1.1em;line-height:1.4;}
@@ -352,6 +354,11 @@
   <p class="eyebrow" id="legEyebrow">Amtrak · where your signal goes dark</p>
   <h1 id="legTitle">California Zephyr</h1>
   <p class="sub" id="legSub" aria-live="polite"></p>
+  <noscript>
+    <p class="noscript">This page works out the whole trip in your browser, from data built into
+    the file, which is what lets it keep running with no signal. With JavaScript turned off there
+    is nothing to show. Everything it needs is already here; it just needs to be allowed to run.</p>
+  </noscript>
   <p class="tagline">Name any two stations on the Amtrak network. This maps where cellular holds up and where it dies along the way, what is out the window, when the dining car opens, and what to do before the bars disappear. A journey no single train covers is split into legs you can step through.</p>
 
   <div class="picker">

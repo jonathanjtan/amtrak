@@ -267,6 +267,8 @@
   .pk select:focus-visible,.pk input:focus-visible{outline:2px solid var(--focus);outline-offset:1px;}
   .pk-swap button{padding:9px 13px;}
   .pk input:invalid{border-color:var(--dead);}
+  .noscript{border:1px solid var(--rail);border-left:3px solid var(--accent);border-radius:10px;
+    padding:12px 14px;margin:0 0 18px;color:var(--paper);font-size:13.5px;line-height:1.5;max-width:66ch;}
   .tagline{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0 0 20px;max-width:66ch;}
   .ctl-right{display:flex;gap:8px;flex-wrap:wrap;}
   .pk-msg{font-size:12px;color:var(--accent);margin:0 0 14px;min-height:1.1em;line-height:1.4;}
