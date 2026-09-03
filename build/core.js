@@ -247,13 +247,23 @@ function covRuns(){
   });
   return out;
 }
+/* Dining-car service windows, on the train's own clock. The one definition:
+   the timetable printed under the dining section is generated from it. */
+const MEALS=[[6.5,9.5,"Breakfast"],[11.5,14.5,"Lunch"],[17,21,"Dinner"]];
+const LAST_CALL=0.25;                       /* hours before close */
+function hhmm(h){
+  let m=Math.round(h*60)%1440; if(m<0)m+=1440;
+  let hr=Math.floor(m/60), mi=m%60;
+  const ap=hr<12?"a":"p"; let h12=hr%12; if(!h12)h12=12;
+  return {t:h12+":"+(mi<10?"0":"")+mi,ap:ap};
+}
 /* Darkness and meal service keep to the wall clock, so a late train meets them
    at earlier points on its route. Recomputed whenever the delay changes. */
 function wallBands(L){
   L.night=[]; L.meals=[];
   L.dining=L.TOTAL>=10;
   const STEP=Math.max(2/60,L.TOTAL/900);
-  const MEALS=[[6.5,9.5,"Breakfast"],[11.5,14.5,"Lunch"],[17,21,"Dinner"]];
+
   let curN=null,curM=null;
   for(let t=0;t<=L.TOTAL+1e-9;t+=STEP){
     const pos=posAt(t,L), inst=new Date(L.dep.getTime()+(t+DELAY)*3600000);

@@ -713,13 +713,23 @@ function covRuns(){
   });
   return out;
 }
+/* Dining-car service windows, on the train's own clock. The one definition:
+   the timetable printed under the dining section is generated from it. */
+const MEALS=[[6.5,9.5,"Breakfast"],[11.5,14.5,"Lunch"],[17,21,"Dinner"]];
+const LAST_CALL=0.25;                       /* hours before close */
+function hhmm(h){
+  let m=Math.round(h*60)%1440; if(m<0)m+=1440;
+  let hr=Math.floor(m/60), mi=m%60;
+  const ap=hr<12?"a":"p"; let h12=hr%12; if(!h12)h12=12;
+  return {t:h12+":"+(mi<10?"0":"")+mi,ap:ap};
+}
 /* Darkness and meal service keep to the wall clock, so a late train meets them
    at earlier points on its route. Recomputed whenever the delay changes. */
 function wallBands(L){
   L.night=[]; L.meals=[];
   L.dining=L.TOTAL>=10;
   const STEP=Math.max(2/60,L.TOTAL/900);
-  const MEALS=[[6.5,9.5,"Breakfast"],[11.5,14.5,"Lunch"],[17,21,"Dinner"]];
+
   let curN=null,curM=null;
   for(let t=0;t<=L.TOTAL+1e-9;t+=STEP){
     const pos=posAt(t,L), inst=new Date(L.dep.getTime()+(t+DELAY)*3600000);
@@ -1166,9 +1176,12 @@ function drawDining(){
    '<div class="ob dine"><h4>Dining car <span class="tag">sleeper included</span></h4><p>Chef-prepared breakfast and lunch and a three-course dinner at communal tables. Complimentary for sleeping-car passengers; dinner is by reservation through your car attendant. Coach can join first-come if seats are free.</p></div>'+
    '<div class="ob cafe"><h4>Café car <span class="tag">open to all</span></h4><p>Lower level of the lounge. Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food.</p></div>'+
    '</div><div class="meal-times">'+
-   '<div class="mt"><p class="m">Breakfast</p><p class="h">6:30–9:30a</p><small>board by 9:00</small></div>'+
-   '<div class="mt"><p class="m">Lunch</p><p class="h">11:30a–2:30p</p><small>board by 2:00</small></div>'+
-   '<div class="mt"><p class="m">Dinner</p><p class="h">5:00–9:00p</p><small>board by 8:15 · reserve</small></div>'+
+   MEALS.map(m=>{
+     const a=hhmm(m[0]), b=hhmm(m[1]), lc=hhmm(m[1]-LAST_CALL);
+     return '<div class="mt"><p class="m">'+m[2]+'</p><p class="h">'+
+       a.t+(a.ap!==b.ap?a.ap:"")+"–"+b.t+b.ap+'</p><small>last call '+lc.t+lc.ap+
+       (m[2]==="Dinner"?" · reserve":"")+'</small></div>';
+   }).join("")+
    '</div><p class="sight-note">Meals run on the train\'s local clock, which shifts under you as you cross time zones. On this leg that works out to '+
    (names.length?('<b>'+names.length+' service'+(names.length>1?"s":"")+'</b>: '+
       mealsByDay().join("; ")):'<b>no full meal service</b>')+
@@ -1197,7 +1210,7 @@ function agEvents(){
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
   LEG.meals.forEach(m=>ev.push({t:m.a,pri:2,title:m.name+" opens",
-    sub:"dining car · last call ~"+clockAt(Math.max(m.a,m.b-0.25)).time}));
+    sub:"dining car · last call ~"+clockAt(Math.max(m.a,m.b-LAST_CALL)).time}));
   LEG.night.forEach(n=>{
     ev.push({t:n.a,pri:3,title:"Dark outside",sub:"nothing to see until dawn"});
     if(n.b<LEG.TOTAL-0.05) ev.push({t:n.b,pri:3,title:"Daylight returns",sub:"the window is worth watching again"});
@@ -1233,7 +1246,7 @@ function agTipList(t){
   if(sn) add("◉",'<b>'+sn.n+', right now.</b> '+lookText(sn)+'.',true);
   else if(ns&&ns.t-t<=Math.max(0.6,LEG.TOTAL/60))
     add("◉",'<b>Head up to the Sightseer Lounge.</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.',ns.t-t<=0.4);
-  if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-0.25)).time+'. Sleeper fares include it; coach can join if seats are free.');
+  if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'. Sleeper fares include it; coach can join if seats are free.');
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
   else if(nm&&nm.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
   if(st){
@@ -1302,7 +1315,7 @@ function updateAgenda(t){
     :('Daylight'+(nd?' · <em>dark from ~'+clockAt(nd).time+'</em>':''))]);
   const mn=mealAt(t),nm=nextMeal(t);
   rows.push(["Dining",!LEG.dining?'Café car only on this run'
-    :(mn?(mn.name+' being served · <em>last call ~'+clockAt(Math.max(mn.a,mn.b-0.25)).time+'</em>')
+    :(mn?(mn.name+' being served · <em>last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'</em>')
        :(nm?(nm.name+' opens ~'+clockAt(nm.a).time+' · <em>in '+fmtDur(nm.a-t)+'</em>'):'Closed for the rest of this leg'))]);
   const sn=sightNow(t),ns=nextSight(t);
   rows.push(["Window",sn?('<b>'+sn.n+'</b> · <em>'+lookText(sn)+'</em>')

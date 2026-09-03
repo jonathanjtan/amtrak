@@ -20,7 +20,7 @@ function agEvents(){
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
   LEG.meals.forEach(m=>ev.push({t:m.a,pri:2,title:m.name+" opens",
-    sub:"dining car · last call ~"+clockAt(Math.max(m.a,m.b-0.25)).time}));
+    sub:"dining car · last call ~"+clockAt(Math.max(m.a,m.b-LAST_CALL)).time}));
   LEG.night.forEach(n=>{
     ev.push({t:n.a,pri:3,title:"Dark outside",sub:"nothing to see until dawn"});
     if(n.b<LEG.TOTAL-0.05) ev.push({t:n.b,pri:3,title:"Daylight returns",sub:"the window is worth watching again"});
@@ -56,7 +56,7 @@ function agTipList(t){
   if(sn) add("◉",'<b>'+sn.n+', right now.</b> '+lookText(sn)+'.',true);
   else if(ns&&ns.t-t<=Math.max(0.6,LEG.TOTAL/60))
     add("◉",'<b>Head up to the Sightseer Lounge.</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.',ns.t-t<=0.4);
-  if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-0.25)).time+'. Sleeper fares include it; coach can join if seats are free.');
+  if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'. Sleeper fares include it; coach can join if seats are free.');
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
   else if(nm&&nm.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
   if(st){
@@ -125,7 +125,7 @@ function updateAgenda(t){
     :('Daylight'+(nd?' · <em>dark from ~'+clockAt(nd).time+'</em>':''))]);
   const mn=mealAt(t),nm=nextMeal(t);
   rows.push(["Dining",!LEG.dining?'Café car only on this run'
-    :(mn?(mn.name+' being served · <em>last call ~'+clockAt(Math.max(mn.a,mn.b-0.25)).time+'</em>')
+    :(mn?(mn.name+' being served · <em>last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'</em>')
        :(nm?(nm.name+' opens ~'+clockAt(nm.a).time+' · <em>in '+fmtDur(nm.a-t)+'</em>'):'Closed for the rest of this leg'))]);
   const sn=sightNow(t),ns=nextSight(t);
   rows.push(["Window",sn?('<b>'+sn.n+'</b> · <em>'+lookText(sn)+'</em>')

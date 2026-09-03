@@ -206,9 +206,12 @@ function drawDining(){
    '<div class="ob dine"><h4>Dining car <span class="tag">sleeper included</span></h4><p>Chef-prepared breakfast and lunch and a three-course dinner at communal tables. Complimentary for sleeping-car passengers; dinner is by reservation through your car attendant. Coach can join first-come if seats are free.</p></div>'+
    '<div class="ob cafe"><h4>Café car <span class="tag">open to all</span></h4><p>Lower level of the lounge. Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food.</p></div>'+
    '</div><div class="meal-times">'+
-   '<div class="mt"><p class="m">Breakfast</p><p class="h">6:30–9:30a</p><small>board by 9:00</small></div>'+
-   '<div class="mt"><p class="m">Lunch</p><p class="h">11:30a–2:30p</p><small>board by 2:00</small></div>'+
-   '<div class="mt"><p class="m">Dinner</p><p class="h">5:00–9:00p</p><small>board by 8:15 · reserve</small></div>'+
+   MEALS.map(m=>{
+     const a=hhmm(m[0]), b=hhmm(m[1]), lc=hhmm(m[1]-LAST_CALL);
+     return '<div class="mt"><p class="m">'+m[2]+'</p><p class="h">'+
+       a.t+(a.ap!==b.ap?a.ap:"")+"–"+b.t+b.ap+'</p><small>last call '+lc.t+lc.ap+
+       (m[2]==="Dinner"?" · reserve":"")+'</small></div>';
+   }).join("")+
    '</div><p class="sight-note">Meals run on the train\'s local clock, which shifts under you as you cross time zones. On this leg that works out to '+
    (names.length?('<b>'+names.length+' service'+(names.length>1?"s":"")+'</b>: '+
       mealsByDay().join("; ")):'<b>no full meal service</b>')+
