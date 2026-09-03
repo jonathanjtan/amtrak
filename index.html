@@ -1735,7 +1735,7 @@ function deadEndMessage(a,b){
     return false;
   });
   if(onward) return generic;
-  return "Trains out of "+place(a)+" reach as far as "+stationName(far.code)+
+  return "Trains out of "+place(a)+" reach as far as "+place(far.code)+
          ", and no Amtrak route continues from there. Reaching "+place(b)+
          " means changing stations by some other means, which breaks the journey in two.";
 }
