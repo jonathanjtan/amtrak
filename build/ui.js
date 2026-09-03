@@ -1,6 +1,7 @@
 /* ================= timeline ================= */
 const strip=$("strip"),axis=$("axis"),sstars=$("sstars"),mealsEl=$("meals");
-function fmtDur(hh){hh=Math.max(0,hh);const H=Math.floor(hh),M=Math.round((hh-H)*60);
+function fmtDur(hh){hh=Math.max(0,hh);let H=Math.floor(hh),M=Math.round((hh-H)*60);
+  if(M===60){H++;M=0;}                       /* 17.999 hours is 18h, not 17h 60m */
   return (H?H+"h ":"")+(M<10&&H?"0":"")+M+"m";}
 /* Schedule times slide with the delay. Wall-clock events (meals, darkness) were
    already found at their delayed positions, so they must not be shifted again. */

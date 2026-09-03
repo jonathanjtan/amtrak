@@ -316,6 +316,10 @@ function buildLeg(){
    The sub-segments between two stops share that hop's running time evenly, so
    the totals fall out of the timetable and the coverage string alone — cheap
    enough to run over every leg of every journey option while you pick one. */
+/* Ride time between two stops of one train. You board at a departure and get
+   off at an arrival, so the wait at the stop where you alight belongs to the
+   train's day, not to your journey. */
+const rideMins=(it,a,b)=>it.s[b][1]-(it.s[b][2]||0)-it.s[a][1];
 function legHours(itIdx,o,e,car){
   const it=ITS[itIdx], cv=it.cv[car||carrier], out={good:0,spotty:0,dead:0};
   if(!cv) return out;

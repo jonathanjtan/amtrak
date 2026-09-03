@@ -44,11 +44,11 @@ function servicesFor(a,b){
     if(ia<0) return;
     if(b===null){
       if(ia>=codes.length-1) return;                 /* already the end of this line */
-      out.push({i:i,o:ia,e:codes.length-1,mins:it.s[codes.length-1][1]-it.s[ia][1]}); return;
+      out.push({i:i,o:ia,e:codes.length-1,mins:rideMins(it,ia,codes.length-1)}); return;
     }
     const ib=codes.indexOf(b,ia+1);
     if(ib<0) return;
-    out.push({i:i,o:ia,e:ib,mins:it.s[ib][1]-it.s[ia][1]});
+    out.push({i:i,o:ia,e:ib,mins:rideMins(it,ia,ib)});
   });
   /* a train that does not run on the chosen date is not the quickest option,
      whatever the timetable says */
@@ -110,12 +110,12 @@ function reachMaps(a,b){
     const codes=it.s.map(x=>x[0]);
     const ia=codes.indexOf(a);
     if(ia>=0) for(let j=ia+1;j<codes.length;j++){
-      const m=it.s[j][1]-it.s[ia][1], cur=fromA.get(codes[j]);
+      const m=rideMins(it,ia,j), cur=fromA.get(codes[j]);
       if(m>0&&(!cur||m<cur.mins)) fromA.set(codes[j],{mins:m,i:i,o:ia,e:j});
     }
     const ib=codes.lastIndexOf(b);
     if(ib>0) for(let j=0;j<ib;j++){
-      const m=it.s[ib][1]-it.s[j][1], cur=toB.get(codes[j]);
+      const m=rideMins(it,j,ib), cur=toB.get(codes[j]);
       if(m>0&&(!cur||m<cur.mins)) toB.set(codes[j],{mins:m,i:i,o:j,e:ib});
     }
   });
@@ -283,7 +283,7 @@ function labelRoutes(){
   [...routeSel.options].forEach(o=>{
     const p=o.value.split(":").map(Number), it=ITS[p[0]], days=runDays(it);
     const dead=legHours(p[0],p[1],p[2],carrier).dead;
-    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur((it.s[p[2]][1]-it.s[p[1]][1])/60)+
+    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur(rideMins(it,p[1],p[2])/60)+
       (days.length<7?" · "+days.join("/"):"")+
       (dead>=0.25?" · "+fmtDur(dead)+" off the network":"");
   });

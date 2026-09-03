@@ -819,6 +819,10 @@ function buildLeg(){
    The sub-segments between two stops share that hop's running time evenly, so
    the totals fall out of the timetable and the coverage string alone — cheap
    enough to run over every leg of every journey option while you pick one. */
+/* Ride time between two stops of one train. You board at a departure and get
+   off at an arrival, so the wait at the stop where you alight belongs to the
+   train's day, not to your journey. */
+const rideMins=(it,a,b)=>it.s[b][1]-(it.s[b][2]||0)-it.s[a][1];
 function legHours(itIdx,o,e,car){
   const it=ITS[itIdx], cv=it.cv[car||carrier], out={good:0,spotty:0,dead:0};
   if(!cv) return out;
@@ -1133,7 +1137,8 @@ function zoomAt(L,factor){
 
 /* ================= timeline ================= */
 const strip=$("strip"),axis=$("axis"),sstars=$("sstars"),mealsEl=$("meals");
-function fmtDur(hh){hh=Math.max(0,hh);const H=Math.floor(hh),M=Math.round((hh-H)*60);
+function fmtDur(hh){hh=Math.max(0,hh);let H=Math.floor(hh),M=Math.round((hh-H)*60);
+  if(M===60){H++;M=0;}                       /* 17.999 hours is 18h, not 17h 60m */
   return (H?H+"h ":"")+(M<10&&H?"0":"")+M+"m";}
 /* Schedule times slide with the delay. Wall-clock events (meals, darkness) were
    already found at their delayed positions, so they must not be shifted again. */
@@ -1629,11 +1634,11 @@ function servicesFor(a,b){
     if(ia<0) return;
     if(b===null){
       if(ia>=codes.length-1) return;                 /* already the end of this line */
-      out.push({i:i,o:ia,e:codes.length-1,mins:it.s[codes.length-1][1]-it.s[ia][1]}); return;
+      out.push({i:i,o:ia,e:codes.length-1,mins:rideMins(it,ia,codes.length-1)}); return;
     }
     const ib=codes.indexOf(b,ia+1);
     if(ib<0) return;
-    out.push({i:i,o:ia,e:ib,mins:it.s[ib][1]-it.s[ia][1]});
+    out.push({i:i,o:ia,e:ib,mins:rideMins(it,ia,ib)});
   });
   /* a train that does not run on the chosen date is not the quickest option,
      whatever the timetable says */
@@ -1695,12 +1700,12 @@ function reachMaps(a,b){
     const codes=it.s.map(x=>x[0]);
     const ia=codes.indexOf(a);
     if(ia>=0) for(let j=ia+1;j<codes.length;j++){
-      const m=it.s[j][1]-it.s[ia][1], cur=fromA.get(codes[j]);
+      const m=rideMins(it,ia,j), cur=fromA.get(codes[j]);
       if(m>0&&(!cur||m<cur.mins)) fromA.set(codes[j],{mins:m,i:i,o:ia,e:j});
     }
     const ib=codes.lastIndexOf(b);
     if(ib>0) for(let j=0;j<ib;j++){
-      const m=it.s[ib][1]-it.s[j][1], cur=toB.get(codes[j]);
+      const m=rideMins(it,j,ib), cur=toB.get(codes[j]);
       if(m>0&&(!cur||m<cur.mins)) toB.set(codes[j],{mins:m,i:i,o:j,e:ib});
     }
   });
@@ -1868,7 +1873,7 @@ function labelRoutes(){
   [...routeSel.options].forEach(o=>{
     const p=o.value.split(":").map(Number), it=ITS[p[0]], days=runDays(it);
     const dead=legHours(p[0],p[1],p[2],carrier).dead;
-    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur((it.s[p[2]][1]-it.s[p[1]][1])/60)+
+    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur(rideMins(it,p[1],p[2])/60)+
       (days.length<7?" · "+days.join("/"):"")+
       (dead>=0.25?" · "+fmtDur(dead)+" off the network":"");
   });
