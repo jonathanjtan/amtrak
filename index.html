@@ -110,6 +110,7 @@
   .tick .bar{width:1px;height:7px;background:var(--rail);margin:0 auto 3px;}
   .tick .t{font-size:10.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
   .tick .d{font-size:9px;color:var(--spotty);letter-spacing:.14em;text-transform:uppercase;}
+  .strip{cursor:ew-resize;touch-action:none;}
   .nowline{position:absolute;top:0;bottom:22px;width:0;pointer-events:none;z-index:4;
     border-left:2px solid var(--train);}
   .nowline .nub{position:absolute;top:-4px;left:-4px;width:8px;height:8px;border-radius:50%;
@@ -389,6 +390,7 @@
     <div class="tl-cap">
       <span class="k" style="color:var(--scenic)"><svg width="15" height="10" viewBox="-7 -5 14 10" aria-hidden="true" style="vertical-align:-1px"><path d="M-6 0 C-3 -4 3 -4 6 0 C3 4 -3 4 -6 0 Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle r="1.7" fill="currentColor"/></svg>&nbsp;scenery highlight</span>
       <span class="k"><span class="sw" style="background:var(--dine)"></span>dining-car meal window (train time)</span>
+      <span class="k" style="color:var(--muted)">click or drag the bar to move through the trip</span>
     </div>
   </div>
 
@@ -1498,6 +1500,29 @@ function updateTrain(){
     liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
 }
+/* Click or drag the strip to move through the trip. Direct manipulation beats
+   hunting for the slider, which is hidden until you switch off live mode. */
+(function(){
+  const strip=$("strip");
+  if(!strip) return;
+  let dragging=false;
+  const seek=e=>{
+    const b=strip.getBoundingClientRect();
+    const x=(e.touches?e.touches[0].clientX:e.clientX)-b.left;
+    const t=Math.max(0,Math.min(1,x/(b.width||1)))*LEG.TOTAL;
+    if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
+    scrub.value=t.toFixed(2);
+    updateTrain();
+  };
+  strip.addEventListener("pointerdown",e=>{
+    dragging=true; strip.setPointerCapture(e.pointerId); seek(e); e.preventDefault();
+  });
+  strip.addEventListener("pointermove",e=>{ if(dragging) seek(e); });
+  const stop=e=>{ dragging=false; try{strip.releasePointerCapture(e.pointerId);}catch(_){} };
+  strip.addEventListener("pointerup",stop);
+  strip.addEventListener("pointercancel",stop);
+})();
+
 let liveTimer=null;
 function setLiveMode(){
   if(liveOn.checked){scrubRow.classList.add("hidden");if(!liveTimer)liveTimer=setInterval(updateTrain,30000);}

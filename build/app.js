@@ -292,6 +292,29 @@ function updateTrain(){
     liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
 }
+/* Click or drag the strip to move through the trip. Direct manipulation beats
+   hunting for the slider, which is hidden until you switch off live mode. */
+(function(){
+  const strip=$("strip");
+  if(!strip) return;
+  let dragging=false;
+  const seek=e=>{
+    const b=strip.getBoundingClientRect();
+    const x=(e.touches?e.touches[0].clientX:e.clientX)-b.left;
+    const t=Math.max(0,Math.min(1,x/(b.width||1)))*LEG.TOTAL;
+    if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
+    scrub.value=t.toFixed(2);
+    updateTrain();
+  };
+  strip.addEventListener("pointerdown",e=>{
+    dragging=true; strip.setPointerCapture(e.pointerId); seek(e); e.preventDefault();
+  });
+  strip.addEventListener("pointermove",e=>{ if(dragging) seek(e); });
+  const stop=e=>{ dragging=false; try{strip.releasePointerCapture(e.pointerId);}catch(_){} };
+  strip.addEventListener("pointerup",stop);
+  strip.addEventListener("pointercancel",stop);
+})();
+
 let liveTimer=null;
 function setLiveMode(){
   if(liveOn.checked){scrubRow.classList.add("hidden");if(!liveTimer)liveTimer=setInterval(updateTrain,30000);}

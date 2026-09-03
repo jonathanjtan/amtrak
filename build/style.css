@@ -104,6 +104,7 @@
   .tick .bar{width:1px;height:7px;background:var(--rail);margin:0 auto 3px;}
   .tick .t{font-size:10.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
   .tick .d{font-size:9px;color:var(--spotty);letter-spacing:.14em;text-transform:uppercase;}
+  .strip{cursor:ew-resize;touch-action:none;}
   .nowline{position:absolute;top:0;bottom:22px;width:0;pointer-events:none;z-index:4;
     border-left:2px solid var(--train);}
   .nowline .nub{position:absolute;top:-4px;left:-4px;width:8px;height:8px;border-radius:50%;
