@@ -137,7 +137,7 @@ for p in R["patterns"]:
                     v=base*f
                     cov[c2].append("g" if v>=Tg else ("s" if v>=Ts else "d"))
     totpts+=len(poly)
-    its.append({"n":p["name"],"d":p["dir"],"tr":p["train"],"hd":p["head"],"dep":p["dep"],
+    its.append({"n":p["name"],"tr":p["train"],"dep":p["dep"],
                 "s":[[x[0],x[1],x[2]] for x in p["stops"]],"p":poly,"i":idx,"sn":segn,"kl":seglen,
                 "cv":{k:"".join(v) for k,v in cov.items()}})
 print("itineraries:",len(its),"polyline points:",totpts,"stops:",len(ST),"tz:",tzs)
