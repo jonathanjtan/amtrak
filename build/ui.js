@@ -137,7 +137,18 @@ function drawCards(){
     let j=i; while(j+1<LEG.cov.length&&LEG.cov[j+1].st===LEG.cov[i].st) j++;
     runs.push({st:LEG.cov[i].st,t0:LEG.cov[i].t0,t1:LEG.cov[j].t1}); i=j+1;
   }
-  const bad=runs.filter(r=>r.st!=="good").sort((a,b)=>(b.t1-b.t0)-(a.t1-a.t0)).slice(0,4).sort((a,b)=>a.t0-b.t0);
+  /* What you plan around is a continuous stretch without a usable signal, not
+     each shade of it. Between Arcadia Valley and Poplar Bluff the model gives
+     spotty, then dead, then spotty, which used to be three cards under one
+     heading, all reading the same. One card now, carrying the worst of it. */
+  const blocks=[];
+  runs.forEach(r=>{
+    const last=blocks[blocks.length-1];
+    if(r.st==="good"){ return; }
+    if(last&&Math.abs(last.t1-r.t0)<1e-9){ last.t1=r.t1; if(r.st==="dead") last.dead+=r.t1-r.t0; if(r.st==="dead") last.st="dead"; }
+    else blocks.push({st:r.st,t0:r.t0,t1:r.t1,dead:r.st==="dead"?r.t1-r.t0:0});
+  });
+  const bad=blocks.sort((a,b)=>(b.t1-b.t0)-(a.t1-a.t0)).slice(0,4).sort((a,b)=>a.t0-b.t0);
   if(!bad.length){
     cards.innerHTML='<div class="dz"><div class="top"><h3>No gaps worth planning around</h3><span class="chip" style="background:'+covColors().good+';color:#0c1116">Usable</span></div><p>'+CARRIER_NAME[carrier]+' holds up across this whole leg on the model below.</p></div>';
     $("cardsLabel").textContent="Coverage";
@@ -152,7 +163,9 @@ function drawCards(){
     d.innerHTML='<div class="top"><h3>'+LEG.stops[a].short+' → '+LEG.stops[b].short+'</h3>'+
       '<span class="chip" style="background:'+pal[r.st]+';color:'+((theme==="light"&&r.st==="spotty")?"#fff":"#0c1116")+'">'+STAT[r.st]+'</span></div>'+
       '<div class="when">'+c0.day+' ~'+c0.time+'–'+c1.time+' · '+fmtDur(r.t1-r.t0)+'</div>'+
-      '<p>'+(r.st==="dead"?"Expect nothing at all through here. ":"Patchy through here, with gaps between towns. ")+
+      '<p>'+(r.st!=="dead" ? "Patchy through here, with gaps between towns. "
+        : (r.dead>=(r.t1-r.t0)-1e-9 ? "Expect nothing at all through here. "
+           : ("Patchy either side of "+fmtDur(r.dead)+" with nothing at all. ")))+
       'About '+Math.round((r.t1-r.t0)/LEG.TOTAL*100)+'% of the trip.</p>';
     cards.appendChild(d);
   });
