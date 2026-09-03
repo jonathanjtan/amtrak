@@ -290,4 +290,34 @@
   .st-time{fill:var(--muted);font-family:ui-monospace,Menlo,monospace;}
   .route-seg{stroke-linecap:round;stroke-linejoin:round;fill:none;}
   #sightsWrap{display:block;}
+
+  /* Print: the point of this page is the part of the trip with no signal, so
+     it should survive being carried on paper. Interactive furniture goes,
+     the coverage colours stay. */
+  @page{margin:14mm;}
+  @media print{
+    /* must out-specify html[data-theme="dark"], or a reader in dark mode prints
+       white text on a dark page */
+    :root,html[data-theme="dark"],html[data-theme="light"]{
+      --ink:#fff; --ink-2:#fff; --rail:#c8ccd0; --paper:#111; --muted:#4a5157; --chrome:#22282d;
+      --land:#f2f4f6; --land-line:#c8ccd0; --night-band:rgba(0,0,0,.10);
+      --good:#0d7a52; --spotty:#8a5a06; --dead:#a52017; --scenic:#0a6b78; --dine:#2c5c8a;
+    }
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    html,body{background:#fff!important;color:#111!important;}
+    .wrap{max-width:none;padding:0 4mm;}
+    .picker,.pk-msg,.controls,.zoomctl,.maphint,.delayctl,#liveSection,
+    .nowline,.tl-cap .k:last-child{display:none!important;}
+    h1{font-size:22pt;margin:0 0 4pt;}
+    .tagline,.sub{font-size:9pt;}
+    .sec-label{font-size:8pt;letter-spacing:.2em;margin:14pt 0 6pt;break-after:avoid;}
+    .mapcard{border:1px solid var(--rail);break-inside:avoid;}
+    .strip-outer{break-inside:avoid;margin:10pt 16pt 0;}  /* room for the end labels, which centre on 0% and 100% */
+    .agenda{grid-template-columns:1fr 1fr;}
+    .ag,.dz,.sight,.ob,.mt{break-inside:avoid;border:1px solid var(--rail);}
+    .cards{grid-template-columns:1fr 1fr;}
+    .sights{grid-template-columns:1fr 1fr;}
+    footer{font-size:7.5pt;border-top:1px solid var(--rail);padding-top:6pt;}
+    a[href]:after{content:"";}
+  }
 </style>
