@@ -360,6 +360,24 @@ const rideMins=(it,a,b)=>it.s[b][1]-(it.s[b][2]||0)-it.s[a][1];
 const dwellText=m=>m>=90?fmtDur(m/60):(m+" min");   /* 239 min is four hours; say so */
 /* Telling someone to watch for Mount Shasta at five in the morning is only
    useful if you also say the sun is not up yet. */
+/* A hop no train could make means the feed's times for it are wrong, and the
+   position, the coverage timing and the darkness through that stretch are wrong
+   with them. The Mardi Gras Service is scheduled New Orleans to Bay St Louis in
+   24 minutes one way and 151 the other, over the same 92 km; both cannot be
+   right. Said out loud rather than drawn as fact. The fastest hop on the network
+   that is actually credible runs at 185 km/h, on the Corridor. */
+const MAX_KMH=200;
+function impossibleHop(){
+  let worst=null;
+  for(let i=O;i<E;i++){
+    const mins=IT.s[i+1][1]-(IT.s[i+1][2]||0)-IT.s[i][1];
+    if(mins<=0) continue;
+    const kmh=IT.kl[i]/(mins/60);
+    if(kmh>MAX_KMH&&(!worst||kmh>worst.kmh))
+      worst={kmh:kmh,mins:mins,a:place(IT.s[i][0]),b:place(IT.s[i+1][0])};
+  }
+  return worst;
+}
 const darkAt=t=>!!(LEG&&LEG.night&&LEG.night.some(n=>t>=n.a&&t<n.b));
 function stopWhen(s){
   return clockAt(s.t).time+(s.dwell?("–"+clockAt(s.td).time+", "+dwellText(s.dwell)+" stop"):"");

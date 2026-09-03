@@ -702,7 +702,11 @@ function rebuild(){
     (runsOn(IT,depDate.value)
       ? ("This service runs "+listDays(days)+".")
       : ("<b>This service does not run that day.</b> It runs "+listDays(days)+"."));
-  $("runsHint").innerHTML = runsTxt + (runsTxt&&staleDate()?" ":"") + staleDate();
+  const hop=impossibleHop();
+  const hopTxt=hop?("<b>The feed's times between "+hop.a+" and "+hop.b+" do not add up</b> — "+
+    Math.round(hop.mins)+" minutes for a stretch that would need "+Math.round(hop.kmh*0.621371)+
+    " mph. Where the train is through there is a guess."):"";
+  $("runsHint").innerHTML=[runsTxt,staleDate(),hopTxt].filter(Boolean).join(" ");
   $("legSub").innerHTML=IT.n+(IT.tr?' · train <span class="mono">'+IT.tr+'</span>':'')+
     ' · departs <span class="mono">'+clockAt(0).day+" "+clockAt(0).time+" "+(ZAB[a.tz]||"")+'</span>'+
     ' · <span class="mono">'+fmtDur(LEG.TOTAL)+'</span> · <span class="mono">'+Math.round(legKm()).toLocaleString()+' mi</span>'+

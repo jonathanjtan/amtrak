@@ -68,6 +68,14 @@ Three GTFS details the build depends on:
   the next arrival; a stop with a wait appears twice in the polyline so position
   lookups hold still through it.
 
+One feed error the page does not paper over: the Mardi Gras Service is
+scheduled New Orleans to Bay St Louis in 24 minutes eastbound and 151 westbound,
+over the same 92 km. Both cannot be right, and hand-writing a schedule would be
+worse than reflecting the published one, so the page says so instead. Any hop
+implying more than 200 km/h gets the same treatment — the fastest credible hop
+on the network is 185 km/h, on the Corridor, so the check is quiet everywhere
+else and will stay useful if the feed churns again.
+
 Coverage is sampled roughly every 25 km, so a long nonstop leg gets real
 resolution rather than a fixed handful of samples: the Auto Train's single
 1,377 km run is 55 spans, not 10.
