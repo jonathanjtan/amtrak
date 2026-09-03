@@ -7,7 +7,7 @@ holds up and where it dies along the way, what is out the window, when the
 dining car opens, and what to do before the bars disappear.
 
 It started as a single hand-built page about one train, the California
-Zephyr, and now covers 118 itineraries across 49 rail routes and 534
+Zephyr, and now covers 118 itineraries across 47 named routes and 534
 stations. A journey no single train covers is split into legs you can step
 through: Seattle to Miami is the Empire Builder to Chicago, then the
 Floridian.

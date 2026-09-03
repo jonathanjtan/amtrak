@@ -529,6 +529,13 @@ function rebuild(){
   writeURL();
   document.title=shortName(a.name)+" → "+shortName(b.name)+" · Amtrak signal map";
 }
+(function scope(){
+  const el=$("dataScope");
+  if(!el) return;
+  const routes=new Set(ITS.map(i=>i.n)), stops=new Set();
+  ITS.forEach(i=>i.s.forEach(s=>stops.add(s[0])));
+  el.textContent=ITS.length+" itineraries across "+routes.size+" routes and "+stops.size+" stations";
+})();
 (function init(){
   document.documentElement.dataset.theme=theme;
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";

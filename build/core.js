@@ -156,6 +156,8 @@ const SIGHTS=[
   d:"7.8 miles under Stevens Pass, the longest railroad tunnel in the United States."},
  {lat:34.55,lng:-120.50,r:30,dir:"W",n:"Gaviota & Vandenberg coast",
   d:"Miles of open Pacific shoreline with no road access, reachable only by this train."},
+ {lat:43.11,lng:-79.06,r:8,dir:"N",n:"Niagara Gorge",
+  d:"The train crosses the Niagara River on a bridge high above the gorge, downstream of the falls."},
  {lat:41.40,lng:-73.97,r:22,dir:"W",n:"Hudson River",
   d:"The line runs along the water's edge below the Hudson Highlands, with West Point across the river."},
  {lat:40.498,lng:-78.484,r:8,dir:"BOTH",n:"Horseshoe Curve",
