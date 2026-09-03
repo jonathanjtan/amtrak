@@ -44,7 +44,7 @@
       <button data-z="reset" aria-label="Reset view">⤢</button>
     </div>
   </div>
-  <p class="maphint">drag to pan · scroll or pinch to zoom · zoom in for more stops · 🚆 train now</p>
+  <p class="maphint">drag to pan · scroll or pinch to zoom · zoom in for more stops · click a stop to jump to it · 🚆 train now</p>
 
   <div id="liveSection">
     <div class="sec-label">Explore live · satellite</div>
@@ -77,7 +77,7 @@
     </div>
     <div class="dc-row dc-scrub hidden" id="scrubRow">
       <span class="dc-lab">Position</span>
-      <input type="range" id="scrub" min="0" max="52" step="0.05" value="0" aria-label="Hours into trip">
+      <input type="range" id="scrub" min="0" max="52" step="0.01" value="0" aria-label="Hours into trip">
       <span class="mono dc-val" id="scrubVal"></span>
     </div>
     <p class="dc-note">Manual and fully offline. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and darkness keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route. Clock times are local at the train's own position and shift as you cross zones. The train marker reads your device clock when “live” is on; switch it off to scrub by hand.</p>

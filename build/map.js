@@ -119,6 +119,13 @@ function drawMap(){
     const x=px(s.lng),y=py(s.lat), major=(i===0||i===N-1);
     const dot=el("circle",{cx:x,cy:y,class:"st-dot"+(major?" major":"")});
     vp.appendChild(dot); regDot(dot,major?3.4:2.2);
+    /* a wide invisible target so a 2px dot is still clickable, and so asking
+       "what is the signal like at Denver?" is one click */
+    const hit=el("circle",{cx:x,cy:y,r:9,class:"st-hit"});
+    hit.appendChild(el("title",{})).textContent=s.name;
+    hit.addEventListener("click",ev=>{ev.stopPropagation();
+      if(typeof seekTo==="function") seekTo(s.t);});
+    vp.appendChild(hit); regDot(hit,9);
     const above=(i%2===0);
     const gg=el("g",{});
     const lb=el("text",{x:x,y:y+(above?-9:15),class:"st-lbl"+(major?" major":""),"text-anchor":"middle"});

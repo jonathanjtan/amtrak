@@ -77,6 +77,7 @@
   html[data-layer="terrain"][data-imgoff="0"] .feat-label,html[data-layer="satellite"][data-imgoff="0"] .feat-label{
     paint-order:stroke;stroke:rgba(0,0,0,.62);stroke-width:.85;vector-effect:non-scaling-stroke;}
   html[data-layer="terrain"][data-imgoff="0"] .mapcredit,html[data-layer="satellite"][data-imgoff="0"] .mapcredit{display:block;}
+  .st-hit{fill:transparent;cursor:pointer;}
   .st-dot{stroke:var(--paper);vector-effect:non-scaling-stroke;}
   .st-inner{fill:var(--ink);}
   .st-label{fill:var(--paper);font-weight:600;}
@@ -288,6 +289,7 @@
   @media (max-width:620px){.cx-via,.cx-tot{min-width:0;}.cx{gap:5px;}}
   .town-dot{fill:var(--muted);opacity:.75;}
   .town-lbl{fill:var(--muted);font-family:ui-monospace,Menlo,monospace;opacity:.9;}
+  .st-hit{fill:transparent;cursor:pointer;}
   .st-dot{fill:var(--chrome);stroke:var(--ink);stroke-width:.7;vector-effect:non-scaling-stroke;}
   .st-dot.major{fill:var(--paper);}
   .st-lbl{fill:var(--chrome);font-family:ui-monospace,Menlo,monospace;font-weight:600;}

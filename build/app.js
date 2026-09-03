@@ -331,6 +331,12 @@ function updateTrain(){
     strip.setAttribute("aria-valuetext",fmtDur(tc2)+" in, "+clockAt(tc2).full+", "+STAT[covAt(tc2)].toLowerCase());
   }
 }
+/* One way in for every control that moves the train */
+function seekTo(t){
+  if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
+  scrub.value=Math.max(0,Math.min(LEG.TOTAL,t)).toFixed(2);
+  updateTrain();
+}
 /* Click or drag the strip to move through the trip. Direct manipulation beats
    hunting for the slider, which is hidden until you switch off live mode. */
 (function(){
@@ -340,10 +346,7 @@ function updateTrain(){
   const seek=e=>{
     const b=strip.getBoundingClientRect();
     const x=(e.touches?e.touches[0].clientX:e.clientX)-b.left;
-    const t=Math.max(0,Math.min(1,x/(b.width||1)))*LEG.TOTAL;
-    if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
-    scrub.value=t.toFixed(2);
-    updateTrain();
+    seekTo(Math.max(0,Math.min(1,x/(b.width||1)))*LEG.TOTAL);
   };
   strip.addEventListener("pointerdown",e=>{
     dragging=true; strip.setPointerCapture(e.pointerId); seek(e); e.preventDefault();
@@ -353,19 +356,15 @@ function updateTrain(){
   strip.addEventListener("pointerup",stop);
   strip.addEventListener("pointercancel",stop);
   /* the strip is a primary control now, so it has to work from the keyboard */
-  const step=(mins,e)=>{
-    if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
-    const t=Math.max(0,Math.min(LEG.TOTAL,(+scrub.value)+mins/60));
-    scrub.value=t.toFixed(2); updateTrain(); e.preventDefault();
-  };
+  const step=(mins,e)=>{ seekTo((+scrub.value)+mins/60); e.preventDefault(); };
   strip.addEventListener("keydown",e=>{
     const big=e.shiftKey?60:15;
     if(e.key==="ArrowRight"||e.key==="ArrowUp") step(big,e);
     else if(e.key==="ArrowLeft"||e.key==="ArrowDown") step(-big,e);
     else if(e.key==="PageUp") step(180,e);
     else if(e.key==="PageDown") step(-180,e);
-    else if(e.key==="Home"){ if(liveOn.checked){liveOn.checked=false;setLiveMode();} scrub.value=0; updateTrain(); e.preventDefault(); }
-    else if(e.key==="End"){ if(liveOn.checked){liveOn.checked=false;setLiveMode();} scrub.value=LEG.TOTAL.toFixed(2); updateTrain(); e.preventDefault(); }
+    else if(e.key==="Home"){ seekTo(0); e.preventDefault(); }
+    else if(e.key==="End"){ seekTo(LEG.TOTAL); e.preventDefault(); }
   });
 })();
 
