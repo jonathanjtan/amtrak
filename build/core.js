@@ -201,31 +201,7 @@ function buildLeg(){
     base+=n;
   }
   if(!L.cov.length) L.cov.push({t0:0,t1:Math.max(L.TOTAL,0.01),st:"good"});
-  /* darkness + meals, sampled on the real local clock and real sun angle */
-  L.night=[]; L.meals=[];
-  const STEP=Math.max(2/60,L.TOTAL/900);
-  let curN=null, curM=null;
-  const MEALS=[[6.5,9.5,"Breakfast"],[11.5,14.5,"Lunch"],[17,21,"Dinner"]];
-  const dining=L.TOTAL>=10;
-  for(let t=0;t<=L.TOTAL+1e-9;t+=STEP){
-    const pos=posAt(t,L), inst2=new Date(inst.getTime()+t*3600000);
-    const dark=sunAlt(inst2,pos.lat,pos.lng)<-6;
-    if(dark&&!curN) curN={a:t}; else if(!dark&&curN){curN.b=t;L.night.push(curN);curN=null;}
-    if(dining){
-      const tz=nearestStop(t,L).tz, o2=tzOffset(tz,inst2);
-      const loc=((inst2.getTime()/60000+o2)%1440+1440)%1440/60;
-      const m=MEALS.find(M=>loc>=M[0]&&loc<M[1]);
-      if(m&&(!curM||curM.name!==m[2])){ if(curM){curM.b=t;L.meals.push(curM);} curM={a:t,name:m[2]}; }
-      else if(!m&&curM){curM.b=t;L.meals.push(curM);curM=null;}
-    }
-  }
-  if(curN){curN.b=L.TOTAL;L.night.push(curN);}
-  if(curM){curM.b=L.TOTAL;L.meals.push(curM);}
-  L.night=L.night.filter(n=>n.b-n.a>0.2);
-  /* a window the leg only clips the tail of is not a meal you can plan on */
-  const FULL={Breakfast:3,Lunch:3,Dinner:4};
-  L.meals=L.meals.filter(m=>(m.b-m.a)>=Math.min(1.5,FULL[m.name]*0.5));
-  L.dining=dining;
+  wallBands(L);
   /* scenery on this leg, with the side computed from the direction of travel */
   L.sights=[];
   SIGHTS.forEach(s=>{
@@ -258,6 +234,33 @@ function covRuns(){
     if(last&&last.st===s.st) last.t1=s.t1; else out.push({t0:s.t0,t1:s.t1,st:s.st});
   });
   return out;
+}
+/* Darkness and meal service keep to the wall clock, so a late train meets them
+   at earlier points on its route. Recomputed whenever the delay changes. */
+function wallBands(L){
+  L.night=[]; L.meals=[];
+  L.dining=L.TOTAL>=10;
+  const STEP=Math.max(2/60,L.TOTAL/900);
+  const MEALS=[[6.5,9.5,"Breakfast"],[11.5,14.5,"Lunch"],[17,21,"Dinner"]];
+  let curN=null,curM=null;
+  for(let t=0;t<=L.TOTAL+1e-9;t+=STEP){
+    const pos=posAt(t,L), inst=new Date(L.dep.getTime()+(t+DELAY)*3600000);
+    const dark=sunAlt(inst,pos.lat,pos.lng)<-6;
+    if(dark&&!curN) curN={a:t}; else if(!dark&&curN){curN.b=t;L.night.push(curN);curN=null;}
+    if(L.dining){
+      const tz=nearestStop(t,L).tz, off=tzOffset(tz,inst);
+      const loc=((inst.getTime()/60000+off)%1440+1440)%1440/60;
+      const m=MEALS.find(M=>loc>=M[0]&&loc<M[1]);
+      if(m&&(!curM||curM.name!==m[2])){ if(curM){curM.b=t;L.meals.push(curM);} curM={a:t,name:m[2]}; }
+      else if(!m&&curM){curM.b=t;L.meals.push(curM);curM=null;}
+    }
+  }
+  if(curN){curN.b=L.TOTAL;L.night.push(curN);}
+  if(curM){curM.b=L.TOTAL;L.meals.push(curM);}
+  L.night=L.night.filter(n=>n.b-n.a>0.2);
+  /* a window the leg only clips the tail of is not a meal you can plan on */
+  const FULL={Breakfast:3,Lunch:3,Dinner:4};
+  L.meals=L.meals.filter(m=>(m.b-m.a)>=Math.min(1.5,FULL[m.name]*0.5));
 }
 function posAt(t,L){
   L=L||LEG; const P=L.poly,T=L.polyT;

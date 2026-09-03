@@ -2,6 +2,8 @@
 const strip=$("strip"),axis=$("axis"),sstars=$("sstars"),mealsEl=$("meals");
 function fmtDur(hh){hh=Math.max(0,hh);const H=Math.floor(hh),M=Math.round((hh-H)*60);
   return (H?H+"h ":"")+(M<10&&H?"0":"")+M+"m";}
+/* Schedule times slide with the delay. Wall-clock events (meals, darkness) were
+   already found at their delayed positions, so they must not be shifted again. */
 function clockAt(t){
   const s=nearestStop(t), d=new Date(LEG.dep.getTime()+(t+DELAY)*3600000), f=fmtLocal(d,s.tz);
   return {time:f.time,day:f.day,z:ZAB[s.tz]||"",full:f.day+" ~"+f.time+" "+(ZAB[s.tz]||"")};
