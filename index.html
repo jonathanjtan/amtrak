@@ -1691,6 +1691,8 @@ function drawJourney(){
       const on=(ci===J.pick&&li+1===J.leg);
       btn.className="cx-leg"+(on?" on":"");
       btn.setAttribute("aria-pressed",String(on));
+      btn.setAttribute("aria-label","Leg "+(li+1)+" of "+c.legs.length+", "+ITS[leg.i].n+
+        ", "+fmtDur(leg.mins/60)+", via "+c.vias.map(v=>shortName(stationName(v))).join(" and "));
       btn.innerHTML='<b>'+(li+1)+'</b> '+ITS[leg.i].n+' <span class="mono">'+fmtDur(leg.mins/60)+'</span>';
       btn.addEventListener("click",()=>{J.pick=ci;J.leg=li+1;drawJourney();
         loadLeg(leg,(c.offsets&&c.offsets[li])||0);});
@@ -1860,11 +1862,31 @@ function offerRunAboard(){
   });
   host.appendChild(b);
 }
+/* the slider has to report a position in every state, including before
+   departure and after arrival, or it reads as empty to a screen reader */
+function describeSlider(t){
+  const strip=$("strip");
+  if(!strip||!LEG) return;
+  strip.setAttribute("aria-valuemin","0");
+  strip.setAttribute("aria-valuemax",LEG.TOTAL.toFixed(2));
+  if(t===null||!isFinite(t)){
+    strip.setAttribute("aria-valuenow","0");
+    strip.setAttribute("aria-valuetext","no date set");
+    return;
+  }
+  const tc=Math.max(0,Math.min(t,LEG.TOTAL));
+  strip.setAttribute("aria-valuenow",tc.toFixed(2));
+  strip.setAttribute("aria-valuetext",
+    t<0 ? ("not departed, leaves in "+fmtDur(-t))
+        : (t>=LEG.TOTAL ? ("arrived, "+fmtDur(LEG.TOTAL)+" in total")
+                        : (fmtDur(tc)+" in, "+clockAt(tc).full+", "+STAT[covAt(tc)].toLowerCase())));
+}
 function updateTrain(){
   const t=computeTNow();
   if(window.__onTrain)window.__onTrain(t);
   updateAgenda(t);
   moveNowLine(t);
+  describeSlider(t);
   if(!trainG) return;
   if(t===null){trainG.style.display="none";liveStatus.textContent="set a date";offerRunAboard();return;}
   if(t<-0.001){trainG.style.display="none";liveStatus.textContent="departs in "+fmtDur(-t);
@@ -1879,13 +1901,6 @@ function updateTrain(){
   else{const i=stopIndexAt(t);
     liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
-  const strip=$("strip");
-  if(strip&&t!==null&&isFinite(t)){
-    const tc2=Math.max(0,Math.min(t,LEG.TOTAL));
-    strip.setAttribute("aria-valuemax",LEG.TOTAL.toFixed(2));
-    strip.setAttribute("aria-valuenow",tc2.toFixed(2));
-    strip.setAttribute("aria-valuetext",fmtDur(tc2)+" in, "+clockAt(tc2).full+", "+STAT[covAt(tc2)].toLowerCase());
-  }
 }
 /* One way in for every control that moves the train */
 function seekTo(t){
