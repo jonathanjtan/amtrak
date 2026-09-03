@@ -57,6 +57,18 @@ function servicesFor(a,b){
    service from the origin and another to the destination, cheapest total time
    first, and falls back to two changes when one will not do. */
 const MIN_CONNECT=30;                     /* minutes; anything tighter is not a plan */
+/* A change is not thirty minutes just because you would like it to be: the
+   Floridian leaves Chicago once a day. Work the wait out of the timetable. */
+const clockMin=(it,idx)=>{
+  const hm=it.dep.split(":").map(Number);
+  return ((hm[0]*60+hm[1]+it.s[idx][1])%1440+1440)%1440;
+};
+function waitAt(leg1,leg2){
+  const arr=clockMin(ITS[leg1.i],leg1.e), dep=clockMin(ITS[leg2.i],leg2.o);
+  let w=((dep-arr)%1440+1440)%1440;
+  if(w<MIN_CONNECT) w+=1440;            /* too tight to make: it is tomorrow's train */
+  return w;
+}
 function reachMaps(a,b){
   const fromA=new Map(), toB=new Map();
   ITS.forEach((it,i)=>{
@@ -92,7 +104,8 @@ function connectionsFor(a,b){
     if(x===a||x===b) return;
     const w=toB.get(x);
     if(!w||v.i===w.i) return;
-    one.push({vias:[x],legs:[v,w],total:v.mins+w.mins+MIN_CONNECT});
+    const wait=waitAt(v,w);
+    one.push({vias:[x],legs:[v,w],waits:[wait],total:v.mins+w.mins+wait});
   });
   if(one.length){ one.sort((p,q)=>p.total-q.total); return dedupe(one,3); }
   /* nothing direct enough: allow a middle train between two interchanges */
@@ -108,9 +121,11 @@ function connectionsFor(a,b){
         if(!w||w.i===i||codes[q]===b) continue;
         const mid=it.s[q][1]-it.s[p][1];
         if(mid<=0) continue;
-        const tot=v.mins+mid+w.mins+2*MIN_CONNECT;
+        const midLeg={mins:mid,i:i,o:p,e:q};
+        const w1=waitAt(v,midLeg), w2=waitAt(midLeg,w);
+        const tot=v.mins+w1+mid+w2+w.mins;
         if(!best||tot<best.total)
-          best={vias:[codes[p],codes[q]],legs:[v,{mins:mid,i:i,o:p,e:q},w],total:tot};
+          best={vias:[codes[p],codes[q]],legs:[v,midLeg,w],waits:[w1,w2],total:tot};
       }
     }
     if(best) two.push(best);
@@ -163,8 +178,9 @@ function drawJourney(){
   const box=document.createElement("div"); box.className="connect";
   J.list.forEach((c,ci)=>{
     const row=document.createElement("div"); row.className="cx";
+    const waitTxt=(c.waits||[]).map(w=>fmtDur(w/60)).join(" + ");
     row.innerHTML='<span class="cx-via">via '+c.vias.map(v=>shortName(stationName(v))).join(", ")+'</span>'+
-      '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total</span>';
+      '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+'</span>';
     c.legs.forEach((leg,li)=>{
       const btn=document.createElement("button");
       btn.type="button";
