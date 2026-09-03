@@ -125,7 +125,9 @@ function drawDining(){
   const wrap=$("diningWrap");
   if(!LEG.dining){
     wrap.innerHTML='<div class="sec-label">Onboard</div><p class="sight-note">This leg runs '+fmtDur(LEG.TOTAL)+
-      ', so expect a <b>café car</b> rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard.</p>';
+      ', so expect a <b>café car</b> rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard. '+
+      'Amtrak carries free Wi-Fi on most corridor trains, but it runs over the same cellular networks mapped above, '+
+      'so it thins out and drops in the same places. Treat the colors here as the ceiling for onboard Wi-Fi too.</p>';
     return;
   }
   const names=LEG.meals.map(m=>m.name);

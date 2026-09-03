@@ -388,7 +388,7 @@
   <div id="diningWrap"></div>
 
   <footer>
-    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>; times are the timetable for the week of 3 September 2026, not live running, and Amtrak changes schedules. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas.
+    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Where a train does carry Wi-Fi, it is backhauled over these same cellular networks, so it fails where they do. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>; times are the timetable for the week of 3 September 2026, not live running, and Amtrak changes schedules. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas.
   </footer>
 </div>
 
@@ -920,7 +920,9 @@ function drawDining(){
   const wrap=$("diningWrap");
   if(!LEG.dining){
     wrap.innerHTML='<div class="sec-label">Onboard</div><p class="sight-note">This leg runs '+fmtDur(LEG.TOTAL)+
-      ', so expect a <b>café car</b> rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard.</p>';
+      ', so expect a <b>café car</b> rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard. '+
+      'Amtrak carries free Wi-Fi on most corridor trains, but it runs over the same cellular networks mapped above, '+
+      'so it thins out and drops in the same places. Treat the colors here as the ceiling for onboard Wi-Fi too.</p>';
     return;
   }
   const names=LEG.meals.map(m=>m.name);
