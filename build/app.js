@@ -215,7 +215,8 @@ function drawJourney(){
     const row=document.createElement("div"); row.className="cx";
     const waitTxt=(c.waits||[]).map(w=>fmtDur(w/60)).join(" + ");
     row.innerHTML='<span class="cx-via">via '+c.vias.map(v=>shortName(stationName(v))).join(", ")+'</span>'+
-      '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+'</span>';
+      '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+
+      (journeyArrival(c)?", in "+journeyArrival(c):"")+'</span>';
     c.legs.forEach((leg,li)=>{
       const btn=document.createElement("button");
       btn.type="button";
@@ -230,6 +231,20 @@ function drawJourney(){
     box.appendChild(row);
   });
   pkMsg.appendChild(box);
+}
+/* When the whole journey lands, in the destination's own clock */
+function journeyArrival(c){
+  try{
+    const first=ITS[c.legs[0].i], oCode=first.s[c.legs[0].o][0];
+    const hm=first.dep.split(":").map(Number);
+    const start=originInstant(journey?journey.start:depDate.value,
+      hm[0]*60+hm[1]+first.s[c.legs[0].o][1], TZ[ST[oCode][3]]).inst;
+    const end=new Date(start.getTime()+c.total*60000);
+    const lastLeg=c.legs[c.legs.length-1];
+    const dCode=ITS[lastLeg.i].s[lastLeg.e][0];
+    const f=fmtLocal(end,TZ[ST[dCode][3]]);
+    return f.day+" "+f.time;
+  }catch(e){ return ""; }
 }
 function loadLeg(c,dayOffset){
   /* leg two of a journey departs after the ride and the wait, not on the day
