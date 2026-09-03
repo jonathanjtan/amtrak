@@ -36,6 +36,10 @@ outputs there; only `assemble.sh` touches the repository, and it takes the
 path to `data.json`. Nothing has a path baked into it, so the tree can live
 anywhere.
 
+To change only the stylesheet or the scripts, run `build/assemble.sh` with no
+argument: it reuses the data already embedded in `index.html`, so none of the
+source feeds are needed.
+
 Running days come from `calendar.txt`, unioned across every trip sharing a
 terminal pair, so the Sunset Limited reads Mon/Wed/Sat westbound and Wed/Fri/Sun
 eastbound rather than a route-wide blur.
