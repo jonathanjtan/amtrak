@@ -495,7 +495,7 @@
   <div id="diningWrap"></div>
 
   <footer>
-    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Where a train does carry Wi-Fi, it is backhauled over these same cellular networks, so it fails where they do. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>, <span id="dataScope"></span>; times are the timetable for the week of 3 September 2026, not live running, and Amtrak changes schedules. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas. <b>Everything but the satellite view is built into this page</b>, so once it has loaded it keeps working with no signal at all. Save the file if you want it to survive a reload out there.
+    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Where a train does carry Wi-Fi, it is backhauled over these same cellular networks, so it fails where they do. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>, <span id="dataScope"></span>; times are the timetable for the week of <span id="feedWeek">3 September 2026</span>, not live running, and Amtrak changes schedules. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas. <b>Everything but the satellite view is built into this page</b>, so once it has loaded it keeps working with no signal at all. Save the file if you want it to survive a reload out there.
   </footer>
 </div>
 
@@ -524,6 +524,11 @@ function covColors(){
 }
 const STAT={good:"Usable",spotty:"Spotty",dead:"No service"};
 const LONG={g:"good",s:"spotty",d:"dead"};
+/* The week the GTFS snapshot in this file describes. Update it whenever
+   data.json is rebuilt: the footer sentence and the stale-date warning are both
+   generated from it, so they cannot drift apart or from the data. */
+const FEED_WEEK="2026-09-03";
+const FEED_HORIZON=60;                      /* days either side we will vouch for */
 /* Not every train runs every day: the Sunset Limited goes three times a week,
    and the Texas Eagle's through cars to Los Angeles likewise. */
 const DAY3=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -2290,10 +2295,11 @@ function rebuild(){
   const a=LEG.stops[0], b=LEG.stops[LEG.stops.length-1];
   $("legTitle").textContent=a.short+" → "+b.short;
   const days=runDays(IT);
-  $("runsHint").innerHTML = days.length>=7 ? "" :
+  const runsTxt = days.length>=7 ? "" :
     (runsOn(IT,depDate.value)
       ? ("This service runs "+listDays(days)+".")
       : ("<b>This service does not run that day.</b> It runs "+listDays(days)+"."));
+  $("runsHint").innerHTML = runsTxt + (runsTxt&&staleDate()?" ":"") + staleDate();
   $("legSub").innerHTML=IT.n+(IT.tr?' · train <span class="mono">'+IT.tr+'</span>':'')+
     ' · departs <span class="mono">'+clockAt(0).day+" "+clockAt(0).time+" "+(ZAB[a.tz]||"")+'</span>'+
     ' · <span class="mono">'+fmtDur(LEG.TOTAL)+'</span> · <span class="mono">'+Math.round(legKm()).toLocaleString()+' mi</span>'+
@@ -2311,6 +2317,27 @@ function rebuild(){
   const routes=new Set(ITS.map(i=>i.n)), stops=new Set();
   ITS.forEach(i=>i.s.forEach(s=>stops.add(s[0])));
   el.textContent=ITS.length+" itineraries across "+routes.size+" routes and "+stops.size+" stations";
+})();
+/* The timetable in this file is one week's snapshot. Amtrak reshuffles
+   schedules seasonally, so a date months out is a guess the page should not
+   make quietly. Said once, in plain terms, rather than as a disclaimer nobody
+   reads at the bottom. */
+const dayGap=(a,b)=>Math.round((Date.parse(a+"T00:00:00Z")-Date.parse(b+"T00:00:00Z"))/86400000);
+function staleDate(){
+  if(!depDate.value) return "";
+  const g=dayGap(depDate.value,FEED_WEEK);
+  if(Math.abs(g)<=FEED_HORIZON) return "";
+  /* the horizon is two months, so the smallest gap that gets here is two months */
+  const months=Math.max(2,Math.round(Math.abs(g)/30.4));
+  return "<b>That is "+months+" months "+(g>0?"past":"before")+
+    " the timetable built into this page.</b> Amtrak reshuffles schedules seasonally, so treat these times as the shape of the trip rather than the trip.";
+}
+(function feedWeek(){
+  const el=$("feedWeek"); if(!el) return;
+  const p=FEED_WEEK.split("-").map(Number);
+  const M=["January","February","March","April","May","June","July","August",
+           "September","October","November","December"];
+  el.textContent=p[2]+" "+M[p[1]-1]+" "+p[0];
 })();
 /* open on the California Zephyr, the route this page started as */
 function openDefault(){

@@ -21,6 +21,11 @@ function covColors(){
 }
 const STAT={good:"Usable",spotty:"Spotty",dead:"No service"};
 const LONG={g:"good",s:"spotty",d:"dead"};
+/* The week the GTFS snapshot in this file describes. Update it whenever
+   data.json is rebuilt: the footer sentence and the stale-date warning are both
+   generated from it, so they cannot drift apart or from the data. */
+const FEED_WEEK="2026-09-03";
+const FEED_HORIZON=60;                      /* days either side we will vouch for */
 /* Not every train runs every day: the Sunset Limited goes three times a week,
    and the Texas Eagle's through cars to Los Angeles likewise. */
 const DAY3=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];

@@ -694,10 +694,11 @@ function rebuild(){
   const a=LEG.stops[0], b=LEG.stops[LEG.stops.length-1];
   $("legTitle").textContent=a.short+" → "+b.short;
   const days=runDays(IT);
-  $("runsHint").innerHTML = days.length>=7 ? "" :
+  const runsTxt = days.length>=7 ? "" :
     (runsOn(IT,depDate.value)
       ? ("This service runs "+listDays(days)+".")
       : ("<b>This service does not run that day.</b> It runs "+listDays(days)+"."));
+  $("runsHint").innerHTML = runsTxt + (runsTxt&&staleDate()?" ":"") + staleDate();
   $("legSub").innerHTML=IT.n+(IT.tr?' · train <span class="mono">'+IT.tr+'</span>':'')+
     ' · departs <span class="mono">'+clockAt(0).day+" "+clockAt(0).time+" "+(ZAB[a.tz]||"")+'</span>'+
     ' · <span class="mono">'+fmtDur(LEG.TOTAL)+'</span> · <span class="mono">'+Math.round(legKm()).toLocaleString()+' mi</span>'+
@@ -715,6 +716,27 @@ function rebuild(){
   const routes=new Set(ITS.map(i=>i.n)), stops=new Set();
   ITS.forEach(i=>i.s.forEach(s=>stops.add(s[0])));
   el.textContent=ITS.length+" itineraries across "+routes.size+" routes and "+stops.size+" stations";
+})();
+/* The timetable in this file is one week's snapshot. Amtrak reshuffles
+   schedules seasonally, so a date months out is a guess the page should not
+   make quietly. Said once, in plain terms, rather than as a disclaimer nobody
+   reads at the bottom. */
+const dayGap=(a,b)=>Math.round((Date.parse(a+"T00:00:00Z")-Date.parse(b+"T00:00:00Z"))/86400000);
+function staleDate(){
+  if(!depDate.value) return "";
+  const g=dayGap(depDate.value,FEED_WEEK);
+  if(Math.abs(g)<=FEED_HORIZON) return "";
+  /* the horizon is two months, so the smallest gap that gets here is two months */
+  const months=Math.max(2,Math.round(Math.abs(g)/30.4));
+  return "<b>That is "+months+" months "+(g>0?"past":"before")+
+    " the timetable built into this page.</b> Amtrak reshuffles schedules seasonally, so treat these times as the shape of the trip rather than the trip.";
+}
+(function feedWeek(){
+  const el=$("feedWeek"); if(!el) return;
+  const p=FEED_WEEK.split("-").map(Number);
+  const M=["January","February","March","April","May","June","July","August",
+           "September","October","November","December"];
+  el.textContent=p[2]+" "+M[p[1]-1]+" "+p[0];
 })();
 /* open on the California Zephyr, the route this page started as */
 function openDefault(){
