@@ -1818,7 +1818,11 @@ function offerRunAboard(){
   const b=document.createElement("button");
   b.type="button"; b.className="aboard";
   b.textContent="the run from "+r.label+" is out there now";
-  b.addEventListener("click",()=>{depDate.value=r.date;rebuild();});
+  /* go through the date control so a journey replans from the new day */
+  b.addEventListener("click",()=>{
+    depDate.value=r.date;
+    depDate.dispatchEvent(new Event("change"));
+  });
   host.appendChild(b);
 }
 function updateTrain(){
