@@ -25,7 +25,13 @@ const regDot=(n,t)=>dots.push({node:n,target:t});
 const regGroup=(n,x,y,t,mz)=>{n.__x=x;n.__y=y;groups.push({node:n,target:t,mz:mz||1});};
 let segEls=[],stationRefs=[],trainG=null,trHalo,trCore,trGlyph;
 
+let lastLegKey=null;
 function drawMap(){
+  /* A new leg needs the view refitted: zooming into the Sierra and then asking
+     for Miami to New York otherwise left the route mostly off-screen. Redraws
+     for the same leg, such as changing carrier or theme, keep the view. */
+  const key=(ITS.indexOf(IT))+":"+O+":"+E;
+  if(key!==lastLegKey){ lastLegKey=key; scale=1; tx=0; ty=0; }
   while(vp.firstChild) vp.removeChild(vp.firstChild);
   labels=[];dots=[];vis=[];groups=[];segEls=[];stationRefs=[];
   fitProjection();
