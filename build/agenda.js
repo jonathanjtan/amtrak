@@ -59,9 +59,13 @@ function agTipList(t){
         add=(ic,html,hot)=>tips.push({ic:ic,html:html,hot:!!hot});
   const sn=sightNow(t),ns=nextSight(t),mn=mealAt(t),nm=nextMeal(t),dark=nightAt(t),nd=nextDark(t),st=nextStop(t);
   if(run.st==="dead"){
-    const left=run.t1-t;
-    if(left<=0.5) add("↑",'<b>Signal back in ~'+fmtDur(left)+'</b> near '+stopName(stopIndexAt(run.t1)+1)+'. Queue your uploads and unsent messages now so they go the moment bars return.',true);
-    else add("✈",'<b>No service for another ~'+fmtDur(left)+'.</b> Good stretch for the lounge car or a nap. Next usable bars ~'+clockAt(run.t1).time+' near '+stopName(stopIndexAt(run.t1)+1)+'.');
+    const left=run.t1-t, where=stopName(stopIndexAt(run.t1)+1);
+    /* what it comes back to, since patchy is not the same promise as usable */
+    const back=run.t1<LEG.TOTAL-1e-9?covAt(run.t1+1e-6):null, patchy=(back==="spotty");
+    if(left<=0.5) add("↑",'<b>'+(patchy?'Patchy signal returns':'Signal back')+' in ~'+fmtDur(left)+
+      '</b> near '+where+'. Queue your uploads and unsent messages now so they go the moment bars return.',true);
+    else add("✈",'<b>No service for another ~'+fmtDur(left)+'.</b> Good stretch for the lounge car or a nap. '+
+      (patchy?'Patchy bars from ~':'Next usable bars ~')+clockAt(run.t1).time+' near '+where+'.');
   }else{
     const d=nextRunOf(t,"dead"), horizon=Math.max(1.0,Math.min(2.0,LEG.TOTAL/26));
     if(d&&d.t-t<=horizon&&d.len>=0.5)
@@ -166,8 +170,8 @@ function updateAgenda(t){
   }
   if(t>=LEG.TOTAL){
     const last=LEG.stops[LEG.stops.length-1];
-    agNowEl.innerHTML='<div class="ag-hero"><span class="chip" style="background:'+pal[covAt(LEG.TOTAL)]+';color:#0c1116">'+STAT[covAt(LEG.TOTAL)]+'</span><p class="ag-where">Arrived: '+last.name+'</p></div>'+
-      '<p class="ag-stamp">'+fmtDur(LEG.TOTAL)+' · '+Math.round(legKm())+' mi</p>';
+    agNowEl.innerHTML='<div class="ag-hero"><span class="chip" style="background:'+pal[covAt(LEG.TOTAL)]+';color:#0c1116">'+STAT[covAt(LEG.TOTAL)]+'</span><p class="ag-where">Arrived: '+last.short+'</p></div>'+
+      '<p class="ag-stamp">'+fmtDur(LEG.TOTAL)+' · '+Math.round(legKm()).toLocaleString()+' mi</p>';
     agNextEl.innerHTML='<li class="ag-item">'+dot(covAt(LEG.TOTAL))+'<span class="ag-when">—</span><span class="ag-what"><b>End of the line</b><span>nothing further on this leg</span></span></li>';
     tipList([{ic:"✓",html:'<b>Back on the network.</b> Anything you queued through the dead stretches should be going out now.'}]);
     return;
