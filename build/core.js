@@ -67,12 +67,22 @@ const NAME_FIX={NYP:"New York Penn Station",BOS:"Boston South Station",BBY:"Bost
 /* extra words people are likely to type */
 const ALIAS={NYP:"nyc new york city penn moynihan",WAS:"dc washington",LAX:"los angeles la union",
   CHI:"chicago union",EMY:"emeryville san francisco bay",SFC:"san francisco",PDX:"portland oregon",
-  POR:"portland maine",SEA:"seattle king street",NOL:"new orleans"};
+  POR:"portland maine",SEA:"seattle king street",NOL:"new orleans",
+  /* the feed carries no province, so the words people would type are not there */
+  VAC:"vancouver bc british columbia canada",VAN:"vancouver washington",
+  TWO:"toronto ontario canada",MTR:"montreal quebec canada"};
 /* the feed title-cases crudely: Mccook, Ny State Fair */
 const tidy=n=>n.replace(/\bMc([a-z])/g,(m,x)=>"Mc"+x.toUpperCase()).replace(/^Ny /,"New York ");
 const stationName=c=>NAME_FIX[c]||tidy(ST[c][0]);
-const stopLabel=c=>stationName(c)+(ST[c][4]?", "+ST[c][4]:"")+" ("+c+")";
-const searchKey=c=>(stationName(c)+" "+(ST[c][4]||"")+" "+c+" "+(ALIAS[c]||"")).toLowerCase();
+/* The feed puts Vancouver in Oregon. It is at 45.63N, north of the Columbia and
+   of Portland, and the train's next stop up the line is already in Washington —
+   a northbound run does not cross the state line twice. Six more US stops carry
+   no state at all, all of them on a coast or a riverbank. Canadian stops
+   correctly have none and keep it that way. */
+const STATE_FIX={VAN:"WA",BAS:"MS",SJM:"MI",EDM:"WA",BEL:"WA",BNG:"WA",VEC:"CA",WAS:"DC"};
+const stateOf=c=>STATE_FIX[c]||(ST[c]&&ST[c][4])||"";
+const stopLabel=c=>stationName(c)+(stateOf(c)?", "+stateOf(c):"")+" ("+c+")";
+const searchKey=c=>(stationName(c)+" "+stateOf(c)+" "+c+" "+(ALIAS[c]||"")).toLowerCase();
 /* Headings want the city, not the paperwork: "Chicago Union Station, IL" reads
    as Chicago. But nineteen names on the network belong to more than one town —
    Portland OR and Portland ME, Springfield IL and MA, three Burlingtons — and
@@ -84,7 +94,7 @@ const PLACE=(()=>{
   const bare={},n1={},lvl={},n2={},out={};
   codes.forEach(c=>{const b=bareName(stationName(c)); bare[c]=b; n1[b]=(n1[b]||0)+1;});
   /* shared name: add the state */
-  codes.forEach(c=>{const l=(n1[bare[c]]>1&&ST[c][4])?bare[c]+", "+ST[c][4]:bare[c];
+  codes.forEach(c=>{const l=(n1[bare[c]]>1&&stateOf(c))?bare[c]+", "+stateOf(c):bare[c];
     lvl[c]=l; n2[l]=(n2[l]||0)+1;});
   /* still shared: two stations in one city, and only the code tells them apart.
      Burbank has a downtown stop and an airport stop, and the feed names both
