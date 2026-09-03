@@ -541,7 +541,7 @@ function rebuild(){
     let segs=[],lTrain=null;
     window.__rebuildLive=function(){
       routeLayer.clearLayers(); segs=[];
-      const pal=PAL[theme];
+      const pal=covColors();
       covRuns().forEach(s=>{
         const pts=[];
         const a=posAt(s.t0),b=posAt(s.t1);
@@ -566,7 +566,7 @@ function rebuild(){
       lmap.invalidateSize(false);
       lmap.fitBounds(L.latLngBounds(LEG.poly),{padding:[24,24],animate:false});
     };
-    window.__recolorLive=function(){const pal=PAL[theme];segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
+    window.__recolorLive=function(){const pal=covColors();segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
     window.__onTrain=function(t){
       if(t===null||t<-0.001){ if(lTrain){lmap.removeLayer(lTrain);lTrain=null;} return; }
       const p=posAt(Math.min(t,LEG.TOTAL));

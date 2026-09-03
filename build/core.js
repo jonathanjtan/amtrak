@@ -6,7 +6,19 @@ const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAt
 const $=id=>document.getElementById(id);
 const TZ=DATA.tz, ST=DATA.stops, ITS=DATA.its;
 const CARRIER_NAME={verizon:"Verizon",att:"AT&T",tmobile:"T-Mobile"};
-const PAL={dark:{good:"#43b98a",spotty:"#e6a93c",dead:"#e5544a"},light:{good:"#1f9e6e",spotty:"#bd7c11",dead:"#cf3b31"}};
+/* Read the coverage colours from the stylesheet rather than keeping a second
+   copy here. They were edited in one place and not the other, which left the
+   legend swatches and the strip drawing two different greens. */
+let _palTheme=null,_pal=null;
+function covColors(){
+  const t=document.documentElement.dataset.theme||"dark";
+  if(t===_palTheme&&_pal) return _pal;
+  const cs=getComputedStyle(document.documentElement);
+  const read=(n,fallback)=>(cs.getPropertyValue(n)||"").trim()||fallback;
+  _palTheme=t;
+  _pal={good:read("--good","#43b98a"),spotty:read("--spotty","#e6a93c"),dead:read("--dead","#e5544a")};
+  return _pal;
+}
 const STAT={good:"Usable",spotty:"Spotty",dead:"No service"};
 const LONG={g:"good",s:"spotty",d:"dead"};
 /* The feed's names are inconsistent for a few big stations, and three Boston

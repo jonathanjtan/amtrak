@@ -11,7 +11,7 @@ function clockAt(t){
 function pct(t){return Math.max(0,Math.min(100,t/LEG.TOTAL*100));}
 function drawTimeline(){
   strip.innerHTML="";sstars.innerHTML="";mealsEl.innerHTML="";axis.innerHTML="";
-  const pal=PAL[theme];
+  const pal=covColors();
   covRuns().forEach(s=>{
     const d=document.createElement("div");d.className="cell";
     d.style.left=pct(s.t0)+"%";d.style.width=(pct(s.t1)-pct(s.t0))+"%";
@@ -105,12 +105,12 @@ function drawCards(){
   }
   const bad=runs.filter(r=>r.st!=="good").sort((a,b)=>(b.t1-b.t0)-(a.t1-a.t0)).slice(0,4).sort((a,b)=>a.t0-b.t0);
   if(!bad.length){
-    cards.innerHTML='<div class="dz"><div class="top"><h3>No gaps worth planning around</h3><span class="chip" style="background:'+PAL[theme].good+';color:#0c1116">Usable</span></div><p>'+CARRIER_NAME[carrier]+' holds up across this whole leg on the model below.</p></div>';
+    cards.innerHTML='<div class="dz"><div class="top"><h3>No gaps worth planning around</h3><span class="chip" style="background:'+covColors().good+';color:#0c1116">Usable</span></div><p>'+CARRIER_NAME[carrier]+' holds up across this whole leg on the model below.</p></div>';
     $("cardsLabel").textContent="Coverage";
     return;
   }
   $("cardsLabel").textContent=bad.length>1?"The stretches to plan around":"The stretch to plan around";
-  const pal=PAL[theme];
+  const pal=covColors();
   bad.forEach(r=>{
     const a=stopIndexAt(r.t0+1e-6), b=Math.min(LEG.stops.length-1,stopIndexAt(r.t1-1e-6)+1);
     const c0=clockAt(r.t0),c1=clockAt(r.t1);

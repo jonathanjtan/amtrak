@@ -70,7 +70,7 @@ function agTipList(t){
 }
 function updateAgenda(t){
   if(t===undefined)t=computeTNow();
-  const pal=PAL[theme];
+  const pal=covColors();
   agCarrierEl.textContent=CARRIER_NAME[carrier];
   agNextEl.innerHTML="";agTipsEl.innerHTML="";
   const paint=items=>items.forEach(e=>{

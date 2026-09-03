@@ -472,7 +472,19 @@ const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAt
 const $=id=>document.getElementById(id);
 const TZ=DATA.tz, ST=DATA.stops, ITS=DATA.its;
 const CARRIER_NAME={verizon:"Verizon",att:"AT&T",tmobile:"T-Mobile"};
-const PAL={dark:{good:"#43b98a",spotty:"#e6a93c",dead:"#e5544a"},light:{good:"#1f9e6e",spotty:"#bd7c11",dead:"#cf3b31"}};
+/* Read the coverage colours from the stylesheet rather than keeping a second
+   copy here. They were edited in one place and not the other, which left the
+   legend swatches and the strip drawing two different greens. */
+let _palTheme=null,_pal=null;
+function covColors(){
+  const t=document.documentElement.dataset.theme||"dark";
+  if(t===_palTheme&&_pal) return _pal;
+  const cs=getComputedStyle(document.documentElement);
+  const read=(n,fallback)=>(cs.getPropertyValue(n)||"").trim()||fallback;
+  _palTheme=t;
+  _pal={good:read("--good","#43b98a"),spotty:read("--spotty","#e6a93c"),dead:read("--dead","#e5544a")};
+  return _pal;
+}
 const STAT={good:"Usable",spotty:"Spotty",dead:"No service"};
 const LONG={g:"good",s:"spotty",d:"dead"};
 /* The feed's names are inconsistent for a few big stations, and three Boston
@@ -904,7 +916,7 @@ function drawMap(){
   applyView(); paintRoute();
 }
 function paintRoute(){
-  const pal=PAL[theme];
+  const pal=covColors();
   segEls.forEach(o=>o.node.setAttribute("stroke",pal[o.st]));
 }
 /* ---------- zoom / pan ---------- */
@@ -959,7 +971,7 @@ function clockAt(t){
 function pct(t){return Math.max(0,Math.min(100,t/LEG.TOTAL*100));}
 function drawTimeline(){
   strip.innerHTML="";sstars.innerHTML="";mealsEl.innerHTML="";axis.innerHTML="";
-  const pal=PAL[theme];
+  const pal=covColors();
   covRuns().forEach(s=>{
     const d=document.createElement("div");d.className="cell";
     d.style.left=pct(s.t0)+"%";d.style.width=(pct(s.t1)-pct(s.t0))+"%";
@@ -1053,12 +1065,12 @@ function drawCards(){
   }
   const bad=runs.filter(r=>r.st!=="good").sort((a,b)=>(b.t1-b.t0)-(a.t1-a.t0)).slice(0,4).sort((a,b)=>a.t0-b.t0);
   if(!bad.length){
-    cards.innerHTML='<div class="dz"><div class="top"><h3>No gaps worth planning around</h3><span class="chip" style="background:'+PAL[theme].good+';color:#0c1116">Usable</span></div><p>'+CARRIER_NAME[carrier]+' holds up across this whole leg on the model below.</p></div>';
+    cards.innerHTML='<div class="dz"><div class="top"><h3>No gaps worth planning around</h3><span class="chip" style="background:'+covColors().good+';color:#0c1116">Usable</span></div><p>'+CARRIER_NAME[carrier]+' holds up across this whole leg on the model below.</p></div>';
     $("cardsLabel").textContent="Coverage";
     return;
   }
   $("cardsLabel").textContent=bad.length>1?"The stretches to plan around":"The stretch to plan around";
-  const pal=PAL[theme];
+  const pal=covColors();
   bad.forEach(r=>{
     const a=stopIndexAt(r.t0+1e-6), b=Math.min(LEG.stops.length-1,stopIndexAt(r.t1-1e-6)+1);
     const c0=clockAt(r.t0),c1=clockAt(r.t1);
@@ -1235,7 +1247,7 @@ function agTipList(t){
 }
 function updateAgenda(t){
   if(t===undefined)t=computeTNow();
-  const pal=PAL[theme];
+  const pal=covColors();
   agCarrierEl.textContent=CARRIER_NAME[carrier];
   agNextEl.innerHTML="";agTipsEl.innerHTML="";
   const paint=items=>items.forEach(e=>{
@@ -1848,7 +1860,7 @@ function rebuild(){
     let segs=[],lTrain=null;
     window.__rebuildLive=function(){
       routeLayer.clearLayers(); segs=[];
-      const pal=PAL[theme];
+      const pal=covColors();
       covRuns().forEach(s=>{
         const pts=[];
         const a=posAt(s.t0),b=posAt(s.t1);
@@ -1873,7 +1885,7 @@ function rebuild(){
       lmap.invalidateSize(false);
       lmap.fitBounds(L.latLngBounds(LEG.poly),{padding:[24,24],animate:false});
     };
-    window.__recolorLive=function(){const pal=PAL[theme];segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
+    window.__recolorLive=function(){const pal=covColors();segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
     window.__onTrain=function(t){
       if(t===null||t<-0.001){ if(lTrain){lmap.removeLayer(lTrain);lTrain=null;} return; }
       const p=posAt(Math.min(t,LEG.TOTAL));

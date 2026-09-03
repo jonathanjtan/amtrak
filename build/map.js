@@ -140,7 +140,7 @@ function drawMap(){
   applyView(); paintRoute();
 }
 function paintRoute(){
-  const pal=PAL[theme];
+  const pal=covColors();
   segEls.forEach(o=>o.node.setAttribute("stroke",pal[o.st]));
 }
 /* ---------- zoom / pan ---------- */
