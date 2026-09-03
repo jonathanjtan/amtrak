@@ -85,8 +85,23 @@ sinuosity alone.
 
 ### What did not work
 
-Adding highway proximity, from the US Census TIGER primary-roads shapefile
+**Highway proximity**, from the US Census TIGER primary-roads shapefile
 (interstates and US routes, 17k records), made no difference: the fit chose a
 weight of zero for both interstate and other-primary terms. Railroads and highways
 follow the same valleys, so along a rail line the distance to a major road barely
 varies and carries almost no signal. Not worth the build dependency.
+
+**Measured terrain**, in place of the sinuosity proxy. Local relief was sampled
+around each Zephyr segment midpoint (a 6 km ring of eight points, from Open-Meteo's
+elevation API) and fitted three ways:
+
+| Terrain term | Fit |
+|---|---|
+| Sinuosity only | 84% |
+| Relief only | 80% |
+| Both | 85% |
+
+Relief on its own is worse than how tightly the track curves, and adding it on top
+buys one segment out of ninety-nine. That is inside the noise, and the full build
+would need roughly 135,000 elevation queries against a free API. The cheap proxy,
+which comes free with track geometry the feed already ships, wins.
