@@ -978,6 +978,20 @@ function drawMap(){
     regLabel(lb,major?11:9.5,mz); regLabel(tm,major?9.5:8.5,mz);
     stationRefs.push({node:tm,i:i});
   });
+  /* Describe the picture for anyone who cannot see it. The static label said
+     the same thing for every route. */
+  (function(){
+    const a=shortName(LEG.stops[0].name), b=shortName(LEG.stops[N-1].name);
+    const tot={good:0,spotty:0,dead:0};
+    LEG.cov.forEach(c=>{tot[c.st]+=c.t1-c.t0;});
+    const bits=[];
+    if(tot.dead>0.05) bits.push(fmtDur(tot.dead)+" with no service");
+    if(tot.spotty>0.05) bits.push(fmtDur(tot.spotty)+" spotty");
+    svg.setAttribute("aria-label",
+      "Route map, "+a+" to "+b+", "+N+" stops over "+Math.round(LEG.km*0.621371).toLocaleString()+" miles"+
+      (bits.length?", colored for "+CARRIER_NAME[carrier]+": "+bits.join(" and ")
+                  :", usable on "+CARRIER_NAME[carrier]+" throughout")+".");
+  })();
   /* train marker */
   trainG=el("g",{}); vp.appendChild(trainG);
   trHalo=el("circle",{r:4.6,class:"train-halo"}); trainG.appendChild(trHalo);
