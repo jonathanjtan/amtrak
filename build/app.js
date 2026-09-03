@@ -391,7 +391,7 @@ function recall(){
     const v=JSON.parse(localStorage.getItem(STORE)||"null");
     if(!v||!v.from||!v.to) return null;
     /* a saved date in the past is worse than today's, so let it go */
-    const today=new Date(); const t0=today.getFullYear()+"-"+("0"+(today.getMonth()+1)).slice(-2)+"-"+("0"+today.getDate()).slice(-2);
+    const t0=todayStr();
     if(!v.on||v.on<t0) v.on=t0;
     return v;
   }catch(e){ return null; }
@@ -465,7 +465,12 @@ function readURL(){
 }
 
 /* ================= assemble ================= */
+const todayStr=()=>{const n=new Date();
+  return n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2)+"-"+("0"+n.getDate()).slice(-2);};
 function rebuild(){
+  /* an empty date used to fall back to a fixed one inside buildLeg, so the page
+     showed a confident set of days for a trip nobody had chosen */
+  if(!depDate.value) depDate.value=todayStr();
   LEG=buildLeg();
   scrub.max=LEG.TOTAL.toFixed(2);
   if(+scrub.value>LEG.TOTAL) scrub.value=0;
@@ -485,8 +490,7 @@ function rebuild(){
 (function init(){
   document.documentElement.dataset.theme=theme;
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
-  const n=new Date();
-  depDate.value=n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2)+"-"+("0"+n.getDate()).slice(-2);
+  depDate.value=todayStr();
   const fromURL=readURL();
   if(fromURL!==-1){
     origIn.value=stopLabel(ITS[fromURL.i].s[fromURL.o][0]);
