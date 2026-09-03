@@ -1,7 +1,8 @@
 <div class="wrap">
-  <p class="eyebrow" id="legEyebrow">Amtrak · pick any two stops</p>
+  <p class="eyebrow" id="legEyebrow">Amtrak · where your signal goes dark</p>
   <h1 id="legTitle">California Zephyr</h1>
   <p class="sub" id="legSub"></p>
+  <p class="tagline">Name any two stations on one Amtrak route. This maps where cellular holds up and where it dies along the way, what is out the window, when the dining car opens, and what to do before the bars disappear.</p>
 
   <div class="picker">
     <label class="pk"><span>From</span><input id="origIn" list="allStops" autocomplete="off" placeholder="any station"></label>
@@ -19,7 +20,10 @@
       <button data-carrier="att">AT&amp;T</button>
       <button data-carrier="tmobile">T-Mobile</button>
     </div>
-    <button id="themeBtn" class="iconbtn" aria-label="Toggle light or dark theme">☀ Light</button>
+    <span class="ctl-right">
+      <button id="copyBtn" class="iconbtn" type="button">⎘ Copy link</button>
+      <button id="themeBtn" class="iconbtn" aria-label="Toggle light or dark theme">☀ Light</button>
+    </span>
   </div>
 
   <div class="legend">

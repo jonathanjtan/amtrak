@@ -42,7 +42,10 @@ function servicesFor(a,b){
   ITS.forEach((it,i)=>{
     const codes=it.s.map(x=>x[0]), ia=codes.indexOf(a);
     if(ia<0) return;
-    if(b===null){ out.push({i:i,o:ia,e:codes.length-1,mins:it.s[codes.length-1][1]-it.s[ia][1]}); return; }
+    if(b===null){
+      if(ia>=codes.length-1) return;                 /* already the end of this line */
+      out.push({i:i,o:ia,e:codes.length-1,mins:it.s[codes.length-1][1]-it.s[ia][1]}); return;
+    }
     const ib=codes.indexOf(b,ia+1);
     if(ib<0) return;
     out.push({i:i,o:ia,e:ib,mins:it.s[ib][1]-it.s[ia][1]});
@@ -72,10 +75,13 @@ function applyChoice(){
 function repick(preferIdx){
   const a=codeFromInput(origIn.value), b=codeFromInput(destIn.value);
   if(!a){pkMsg.textContent="Pick a departure station from the list.";return;}
-  const list=servicesFor(a,b&&b!==a?b:null);
+  if(b&&b===a){pkMsg.textContent="Pick two different stations.";return;}
+  const list=servicesFor(a,b||null).filter(c=>c.e>c.o&&c.mins>0);
   if(!list.length){
-    pkMsg.textContent="No single Amtrak route runs "+shortName(ST[a][0])+" → "+
-      shortName(ST[b][0])+". That journey needs a connection, so pick one leg of it.";
+    pkMsg.textContent=b
+      ? ("No single Amtrak route runs "+shortName(stationName(a))+" → "+shortName(stationName(b))+
+         ". That journey needs a connection, so pick one leg of it.")
+      : (shortName(stationName(a))+" is the end of the line on every route serving it. Name a destination, or start somewhere else.");
     return;
   }
   pkMsg.textContent=list.length>1?(list.length+" services run this, quickest first."):"";
@@ -96,6 +102,25 @@ document.getElementById("carrierCtl").addEventListener("click",e=>{
   carrier=b.dataset.carrier;
   [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));
   rebuild();
+});
+$("copyBtn").addEventListener("click",()=>{
+  const b=$("copyBtn"), url=location.href;
+  const done=t=>{b.textContent=t;setTimeout(()=>{b.textContent="⎘ Copy link";},1800);};
+  /* the clipboard API needs a secure context, which a locally opened file is not */
+  const fallback=()=>{
+    try{
+      const ta=document.createElement("textarea");
+      ta.value=url; ta.setAttribute("readonly","");
+      ta.style.cssText="position:fixed;top:0;left:0;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      const ok=document.execCommand("copy");
+      document.body.removeChild(ta);
+      done(ok?"✓ Copied":"Copy from the address bar");
+    }catch(e){ done("Copy from the address bar"); }
+  };
+  if(navigator.clipboard&&window.isSecureContext)
+    navigator.clipboard.writeText(url).then(()=>done("✓ Copied"),fallback);
+  else fallback();
 });
 $("themeBtn").addEventListener("click",()=>{
   theme=theme==="dark"?"light":"dark";
