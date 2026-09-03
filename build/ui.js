@@ -53,8 +53,28 @@ function refreshTimes(){
 }
 
 /* ================= worst stretches ================= */
+function coverageSummary(){
+  const tot={good:0,spotty:0,dead:0};
+  LEG.cov.forEach(c=>{tot[c.st]+=c.t1-c.t0;});
+  const T=LEG.TOTAL||1, pctD=Math.round(tot.dead/T*100), pctS=Math.round(tot.spotty/T*100);
+  const el=$("covSummary");
+  const CN=CARRIER_NAME[carrier];
+  if(tot.dead<0.05&&tot.spotty<0.05){
+    el.innerHTML="<b>"+CN+" holds the whole way</b> on this model, all "+fmtDur(LEG.TOTAL)+" of it.";
+    return;
+  }
+  const bits=[];
+  if(tot.good>0.05) bits.push("usable for <b>"+fmtDur(tot.good)+"</b>");
+  if(tot.spotty>0.05) bits.push("spotty for <b>"+fmtDur(tot.spotty)+"</b>");
+  if(tot.dead>0.05) bits.push("dead for <b>"+fmtDur(tot.dead)+"</b>");
+  const last=bits.pop();
+  el.innerHTML="Of "+fmtDur(LEG.TOTAL)+" on <b>"+CN+"</b>: "+bits.join(", ")+(bits.length?" and ":"")+last+". "+
+    (tot.dead>0.05?("That is about "+pctD+"% of the trip with nothing at all."):
+     (pctS>0?("About "+pctS+"% of it is patchy."):""));
+}
 function drawCards(){
   const cards=$("cards"); cards.innerHTML="";
+  coverageSummary();
   const runs=[];let i=0;
   while(i<LEG.cov.length){
     let j=i; while(j+1<LEG.cov.length&&LEG.cov[j+1].st===LEG.cov[i].st) j++;
@@ -101,8 +121,22 @@ function lookText(s){
 }
 function drawSights(){
   const wrap=$("sightsWrap"), host=$("sights"); host.innerHTML="";
-  if(!LEG.sights.length){wrap.style.display="none";return;}
+  if(!LEG.sights.length){wrap.style.display="none";$("sideHint").textContent="";return;}
   wrap.style.display="";
+  /* which seat to book, counted honestly: a canyon the train runs through
+     shows on both sides and should not be scored for either */
+  let L=0,R=0,B=0;
+  LEG.sights.forEach(s=>{ if(s.side==="Left")L++; else if(s.side==="Right")R++; else if(s.side==="Both")B++; });
+  const side=$("sideHint");
+  if(!L&&!R&&!B) side.textContent="";
+  else if(!L&&!R) side.innerHTML="All of it shows on both sides here, so any seat will do.";
+  else{
+    const parts=[];
+    if(L) parts.push("<b>"+L+"</b> on the <b>left</b>");
+    if(R) parts.push("<b>"+R+"</b> on the <b>right</b>");
+    side.innerHTML="Of what is marked, "+parts.join(" and ")+
+      (B?("; "+B+(B===1?" shows":" show")+" on both sides"):"")+".";
+  }
   let day=null,grid=null;
   LEG.sights.forEach(s=>{
     const c=clockAt(s.t);

@@ -110,6 +110,8 @@
   .tick .bar{width:1px;height:7px;background:var(--rail);margin:0 auto 3px;}
   .tick .t{font-size:10.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
   .tick .d{font-size:9px;color:var(--spotty);letter-spacing:.14em;text-transform:uppercase;}
+  .cov-sum{font-size:13px;color:var(--muted);line-height:1.5;margin:-4px 0 4px;max-width:68ch;}
+  .cov-sum b{color:var(--paper);font-weight:600;}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(216px,1fr));gap:12px;margin-top:22px;}
   .dz{background:var(--ink-2);border:1px solid var(--rail);border-radius:10px;padding:13px 15px;transition:background .25s;}
   .dz .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 4px;}
@@ -400,11 +402,12 @@
   <p class="dc-note">This follows the train position you set above, whether that is the live clock, the delay, or a manual scrub. The colored dot on each item says whether <b>cellular is likely</b> at that point: green usable, amber spotty, red none. Coverage and platform times are estimates. Dining and darkness keep to the wall clock; everything else slides with the delay.</p>
 
   <div class="sec-label" id="cardsLabel">The stretches to plan around</div>
+  <p class="cov-sum" id="covSummary"></p>
   <div class="cards" id="cards"></div>
 
   <div id="sightsWrap">
     <div class="sec-label">What to watch for</div>
-    <p class="sub" style="margin-bottom:2px">Scenery on this leg, in order, with which way to look. Left and right are computed for the direction you are travelling. The glass-roofed <b style="color:var(--paper)">Sightseer Lounge</b>, where the train has one, sees both sides.</p>
+    <p class="sub" style="margin-bottom:2px">Scenery on this leg, in order, with which way to look. Left and right are computed for the direction you are travelling. The glass-roofed <b style="color:var(--paper)">Sightseer Lounge</b>, where the train has one, sees both sides. <span id="sideHint"></span></p>
     <div id="sights"></div>
   </div>
 
@@ -906,8 +909,28 @@ function refreshTimes(){
 }
 
 /* ================= worst stretches ================= */
+function coverageSummary(){
+  const tot={good:0,spotty:0,dead:0};
+  LEG.cov.forEach(c=>{tot[c.st]+=c.t1-c.t0;});
+  const T=LEG.TOTAL||1, pctD=Math.round(tot.dead/T*100), pctS=Math.round(tot.spotty/T*100);
+  const el=$("covSummary");
+  const CN=CARRIER_NAME[carrier];
+  if(tot.dead<0.05&&tot.spotty<0.05){
+    el.innerHTML="<b>"+CN+" holds the whole way</b> on this model, all "+fmtDur(LEG.TOTAL)+" of it.";
+    return;
+  }
+  const bits=[];
+  if(tot.good>0.05) bits.push("usable for <b>"+fmtDur(tot.good)+"</b>");
+  if(tot.spotty>0.05) bits.push("spotty for <b>"+fmtDur(tot.spotty)+"</b>");
+  if(tot.dead>0.05) bits.push("dead for <b>"+fmtDur(tot.dead)+"</b>");
+  const last=bits.pop();
+  el.innerHTML="Of "+fmtDur(LEG.TOTAL)+" on <b>"+CN+"</b>: "+bits.join(", ")+(bits.length?" and ":"")+last+". "+
+    (tot.dead>0.05?("That is about "+pctD+"% of the trip with nothing at all."):
+     (pctS>0?("About "+pctS+"% of it is patchy."):""));
+}
 function drawCards(){
   const cards=$("cards"); cards.innerHTML="";
+  coverageSummary();
   const runs=[];let i=0;
   while(i<LEG.cov.length){
     let j=i; while(j+1<LEG.cov.length&&LEG.cov[j+1].st===LEG.cov[i].st) j++;
@@ -954,8 +977,22 @@ function lookText(s){
 }
 function drawSights(){
   const wrap=$("sightsWrap"), host=$("sights"); host.innerHTML="";
-  if(!LEG.sights.length){wrap.style.display="none";return;}
+  if(!LEG.sights.length){wrap.style.display="none";$("sideHint").textContent="";return;}
   wrap.style.display="";
+  /* which seat to book, counted honestly: a canyon the train runs through
+     shows on both sides and should not be scored for either */
+  let L=0,R=0,B=0;
+  LEG.sights.forEach(s=>{ if(s.side==="Left")L++; else if(s.side==="Right")R++; else if(s.side==="Both")B++; });
+  const side=$("sideHint");
+  if(!L&&!R&&!B) side.textContent="";
+  else if(!L&&!R) side.innerHTML="All of it shows on both sides here, so any seat will do.";
+  else{
+    const parts=[];
+    if(L) parts.push("<b>"+L+"</b> on the <b>left</b>");
+    if(R) parts.push("<b>"+R+"</b> on the <b>right</b>");
+    side.innerHTML="Of what is marked, "+parts.join(" and ")+
+      (B?("; "+B+(B===1?" shows":" show")+" on both sides"):"")+".";
+  }
   let day=null,grid=null;
   LEG.sights.forEach(s=>{
     const c=clockAt(s.t);
