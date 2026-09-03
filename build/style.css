@@ -16,6 +16,8 @@
     --sel:#1a2129; --sel-ink:#ffffff; --focus:#a86d0d; --accent:#8a5a06; --scenic:#0a6f7c; --dine:#3d6fa0; --train:#7e22ce; --hwy-i:#c8781f; --hwy-o:#9c7a4e;
   }
   *{box-sizing:border-box}
+  /* a class with its own display beats the browser's [hidden] rule, so say it here */
+  [hidden]{display:none!important;}
   html,body{margin:0;background:var(--ink);color:var(--paper);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;transition:background .25s ease,color .25s ease;}

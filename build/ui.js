@@ -12,6 +12,9 @@ function clockAt(t){
 function pct(t){return Math.max(0,Math.min(100,t/LEG.TOTAL*100));}
 function drawTimeline(){
   strip.innerHTML="";sstars.innerHTML="";mealsEl.innerHTML="";axis.innerHTML="";
+  /* a key for a marker the leg does not have is just noise */
+  const key=(id,on)=>{const e=$(id); if(e) e.hidden=!on;};
+  key("mealKey",LEG.meals.length>0); key("sceneryKey",LEG.sights.length>0);
   const pal=covColors();
   covRuns().forEach(s=>{
     const d=document.createElement("div");d.className="cell";
@@ -232,7 +235,7 @@ function drawDining(){
     return;
   }
   const names=LEG.meals.map(m=>m.name);
-  wrap.innerHTML='<div class="sec-label">Dining &amp; the observation car</div>'+
+  wrap.innerHTML='<div class="sec-label">Dining &amp; the '+(hasSightseer()?'observation car':'lounge car')+'</div>'+
    '<div class="onboard">'+
    (hasSightseer()
      ? '<div class="ob obs"><h4>Sightseer Lounge <span class="tag">open to all</span></h4><p>An upper deck walled in floor-to-ceiling windows, open to every passenger, with the Café on the lower level. It fills through the best scenery, so claim a spot early.</p></div>'
