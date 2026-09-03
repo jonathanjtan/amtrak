@@ -438,7 +438,9 @@ function describeSlider(t){
   strip.setAttribute("aria-valuetext",
     t<0 ? ("not departed, leaves in "+fmtDur(-t))
         : (t>=LEG.TOTAL ? ("arrived, "+fmtDur(LEG.TOTAL)+" in total")
-                        : (fmtDur(tc)+" in, "+clockAt(tc).full+", "+STAT[covAt(tc)].toLowerCase())));
+                        : (fmtDur(tc)+" in, "+clockAt(tc).full+", "+STAT[covAt(tc)].toLowerCase()+
+                           (LEG.stops[stopIndexAt(tc)].td>tc
+                             ? ", standing at "+LEG.stops[stopIndexAt(tc)].short : ""))));
 }
 function updateTrain(){
   const t=computeTNow();
@@ -457,8 +459,10 @@ function updateTrain(){
   trCore.setAttribute("cx",x);trCore.setAttribute("cy",y);
   trGlyph.setAttribute("x",x);trGlyph.setAttribute("y",y-11);
   if(t>=LEG.TOTAL){liveStatus.textContent="arrived · "+LEG.stops[LEG.stops.length-1].short;}
-  else{const i=stopIndexAt(t);
-    liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
+  else{const i=stopIndexAt(t), here=LEG.stops[i];
+    liveStatus.textContent=fmtDur(t)+" in · "+(t<here.td
+      ? ("at "+here.short+" · leaves in "+fmtDur(here.td-t))
+      : ("past "+stopName(i)+" · next "+stopName(i+1)));}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
 }
 /* One way in for every control that moves the train */
