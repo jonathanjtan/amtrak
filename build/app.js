@@ -291,6 +291,13 @@ function updateTrain(){
   else{const i=stopIndexAt(t);
     liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
+  const strip=$("strip");
+  if(strip&&t!==null&&isFinite(t)){
+    const tc2=Math.max(0,Math.min(t,LEG.TOTAL));
+    strip.setAttribute("aria-valuemax",LEG.TOTAL.toFixed(2));
+    strip.setAttribute("aria-valuenow",tc2.toFixed(2));
+    strip.setAttribute("aria-valuetext",fmtDur(tc2)+" in, "+clockAt(tc2).full+", "+STAT[covAt(tc2)].toLowerCase());
+  }
 }
 /* Click or drag the strip to move through the trip. Direct manipulation beats
    hunting for the slider, which is hidden until you switch off live mode. */
@@ -313,6 +320,21 @@ function updateTrain(){
   const stop=e=>{ dragging=false; try{strip.releasePointerCapture(e.pointerId);}catch(_){} };
   strip.addEventListener("pointerup",stop);
   strip.addEventListener("pointercancel",stop);
+  /* the strip is a primary control now, so it has to work from the keyboard */
+  const step=(mins,e)=>{
+    if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
+    const t=Math.max(0,Math.min(LEG.TOTAL,(+scrub.value)+mins/60));
+    scrub.value=t.toFixed(2); updateTrain(); e.preventDefault();
+  };
+  strip.addEventListener("keydown",e=>{
+    const big=e.shiftKey?60:15;
+    if(e.key==="ArrowRight"||e.key==="ArrowUp") step(big,e);
+    else if(e.key==="ArrowLeft"||e.key==="ArrowDown") step(-big,e);
+    else if(e.key==="PageUp") step(180,e);
+    else if(e.key==="PageDown") step(-180,e);
+    else if(e.key==="Home"){ if(liveOn.checked){liveOn.checked=false;setLiveMode();} scrub.value=0; updateTrain(); e.preventDefault(); }
+    else if(e.key==="End"){ if(liveOn.checked){liveOn.checked=false;setLiveMode();} scrub.value=LEG.TOTAL.toFixed(2); updateTrain(); e.preventDefault(); }
+  });
 })();
 
 let liveTimer=null;
