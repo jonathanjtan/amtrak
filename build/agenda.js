@@ -113,7 +113,7 @@ function agTipList(t){
    reliable upload. Every long stop on the network turns out to have signal —
    they are all in towns — so this is worth knowing before you board. */
 function longStopTip(){
-  const big=LEG.stops.map((s,k)=>({s:s,dw:IT.s[O+k][2]||0}))
+  const big=LEG.stops.map(s=>({s:s,dw:s.dwell}))
     .filter(x=>x.dw>=15).sort((a,b)=>b.dw-a.dw).slice(0,2).sort((a,b)=>a.s.t-b.s.t);
   if(!big.length) return [];
   return [{ic:"▮",html:'<b>'+(big.length>1?'Long stops':'One long stop')+':</b> '+

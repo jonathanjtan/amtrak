@@ -114,7 +114,7 @@ function drawMap(){
     if(!want) return;
     const gap=Math.max(1,Math.floor((N-2)/(want+1)));
     const order=[];
-    for(let i=1;i<N-1;i++) order.push({i:i,dwell:(IT.s[O+i]&&IT.s[O+i][2])||0});
+    for(let i=1;i<N-1;i++) order.push({i:i,dwell:LEG.stops[i].dwell});
     order.sort((a,b)=>b.dwell-a.dwell||a.i-b.i);
     for(const o of order){
       if(named.size>=want+2) break;

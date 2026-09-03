@@ -1029,7 +1029,7 @@ function drawMap(){
     if(!want) return;
     const gap=Math.max(1,Math.floor((N-2)/(want+1)));
     const order=[];
-    for(let i=1;i<N-1;i++) order.push({i:i,dwell:(IT.s[O+i]&&IT.s[O+i][2])||0});
+    for(let i=1;i<N-1;i++) order.push({i:i,dwell:LEG.stops[i].dwell});
     order.sort((a,b)=>b.dwell-a.dwell||a.i-b.i);
     for(const o of order){
       if(named.size>=want+2) break;
@@ -1495,7 +1495,7 @@ function agTipList(t){
    reliable upload. Every long stop on the network turns out to have signal —
    they are all in towns — so this is worth knowing before you board. */
 function longStopTip(){
-  const big=LEG.stops.map((s,k)=>({s:s,dw:IT.s[O+k][2]||0}))
+  const big=LEG.stops.map(s=>({s:s,dw:s.dwell}))
     .filter(x=>x.dw>=15).sort((a,b)=>b.dw-a.dw).slice(0,2).sort((a,b)=>a.s.t-b.s.t);
   if(!big.length) return [];
   return [{ic:"▮",html:'<b>'+(big.length>1?'Long stops':'One long stop')+':</b> '+
