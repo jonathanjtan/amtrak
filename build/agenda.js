@@ -22,7 +22,8 @@ function agEvents(){
   LEG.meals.forEach(m=>ev.push({t:m.a,pri:2,title:m.name+" opens",
     sub:"dining car · last call ~"+clockAt(Math.max(m.a,m.b-LAST_CALL)).time}));
   LEG.night.forEach(n=>{
-    ev.push({t:n.a,pri:3,title:"Dark outside",sub:"nothing to see until dawn"});
+    ev.push({t:n.a,pri:3,title:"Dark outside",
+      sub:n.b>=LEG.TOTAL-1e-6?"and stays dark to the end of this leg":"nothing to see until dawn"});
     if(n.b<LEG.TOTAL-0.05) ev.push({t:n.b,pri:3,title:"Daylight returns",sub:"the window is worth watching again"});
   });
   const L={good:"Signal comes back",spotty:"Signal turns spotty",dead:"Signal drops out"},
@@ -100,7 +101,14 @@ function agTipList(t){
       add("⇄",'<b>Change at '+where+'.</b> The '+cx.nextName+' leaves at ~'+cx.depTime+
         ', '+fmtDur(cx.slack/60)+' after you get in.',cx.slack<=90);
   }
-  if(dark) add("☾",'<b>Dark out.</b> Daylight ~'+clockAt(dark.b).time+'.'+(covRun(t).st==="dead"?' The dead stretch runs through it, so this is the part to sleep through.':''));
+  if(dark){
+    /* a band that runs to the end of the leg is the leg ending in the dark,
+       not the sun coming up then */
+    const endsDark=dark.b>=LEG.TOTAL-1e-6;
+    add("☾",endsDark
+      ? ('<b>Dark out</b> for the rest of this leg.'+(covRun(t).st==="dead"?' The dead stretch runs through it too.':''))
+      : ('<b>Dark out.</b> Daylight ~'+clockAt(dark.b).time+'.'+(covRun(t).st==="dead"?' The dead stretch runs through it, so this is the part to sleep through.':'')));
+  }
   else if(nd&&nd-t<=1.2) add("☾",'<b>Dark in ~'+fmtDur(nd-t)+'.</b> Charge at the seat outlet while there is nothing to look at.');
   return tips.slice(0,4);
 }
@@ -157,7 +165,9 @@ function updateAgenda(t){
     ?'No service · <em>about '+fmtDur(run.t1-t)+' left'+(nx?', '+STAT[nx].toLowerCase()+' again ~'+clockAt(run.t1).time+' near '+stopName(stopIndexAt(run.t1)+1):'')+'</em>'
     :STAT[st]+' on '+CARRIER_NAME[carrier]+' · <em>holds about '+fmtDur(run.t1-t)+(nx?', then '+STAT[nx].toLowerCase()+' from ~'+clockAt(run.t1).time:'')+'</em>']);
   const dk=nightAt(t),nd=nextDark(t);
-  rows.push(["Outside",dk?('Dark · <em>daylight ~'+clockAt(dk.b).time+'</em>')
+  rows.push(["Outside",dk
+    ?(dk.b>=LEG.TOTAL-1e-6 ? 'Dark · <em>and stays dark to the end of this leg</em>'
+                           : 'Dark · <em>daylight ~'+clockAt(dk.b).time+'</em>')
     :('Daylight'+(nd?' · <em>dark from ~'+clockAt(nd).time+'</em>':''))]);
   const mn=mealAt(t),nm=nextMeal(t);
   rows.push(["Dining",!LEG.dining?'Café car only on this run'
