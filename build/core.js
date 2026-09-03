@@ -21,6 +21,17 @@ function covColors(){
 }
 const STAT={good:"Usable",spotty:"Spotty",dead:"No service"};
 const LONG={g:"good",s:"spotty",d:"dead"};
+/* Not every train runs every day: the Sunset Limited goes three times a week,
+   and the Texas Eagle's through cars to Los Angeles likewise. */
+const DAY3=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const runDays=it=>DAY3.filter((d,i)=>(it.dy||"1111111")[i]==="1");
+function runsOn(it,dateStr){
+  if(!dateStr) return true;
+  const p=dateStr.split("-").map(Number);
+  const wd=(new Date(p[0],p[1]-1,p[2]).getDay()+6)%7;     /* 0 = Monday */
+  return ((it.dy||"1111111")[wd]==="1");
+}
+const listDays=a=>a.length>1?a.slice(0,-1).join(", ")+" and "+a[a.length-1]:a[0];
 /* The feed's names are inconsistent for a few big stations, and three Boston
    stops share one name; these are display fixes, not new data. */
 const NAME_FIX={NYP:"New York Penn Station",BOS:"Boston South Station",BBY:"Boston Back Bay",

@@ -1,5 +1,10 @@
 import csv,collections,json
 routes={r["route_id"]:r for r in csv.DictReader(open("gtfs/routes.txt")) if r["route_type"]=="2"}
+CAL={r["service_id"]:r for r in csv.DictReader(open("gtfs/calendar.txt"))}
+DAYNAMES=["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
+def daysOf(trip):
+    c=CAL.get(trip["service_id"])
+    return {d for d in DAYNAMES if c and c[d]=="1"}
 stops={s["stop_id"]:s for s in csv.DictReader(open("gtfs/stops.txt"))}
 trips=[t for t in csv.DictReader(open("gtfs/trips.txt")) if t["route_id"] in routes]
 tid={t["trip_id"]:t for t in trips}
@@ -39,10 +44,18 @@ for (rid,d),lst in sorted(cand.items()):
         s=set(r["stop_id"] for r in rows)
         if not s <= primary:                 # a genuine branch, not a short-turn subset
             keep.append((t,rows)); primary |= s
+    # every trip sharing this terminal pair contributes its running days
+    daymap={}
+    for key,items in cl.items():
+        u=set()
+        for t2,_ in items: u|=daysOf(t2)
+        daymap[key]=u
     for t,rows in keep:
         t0=secs(rows[0]["departure_time"])
         seq=[[r["stop_id"], round((secs(r["departure_time"])-t0)/60), round((secs(r["departure_time"])-secs(r["arrival_time"]))/60)] for r in rows]
-        out.append({"rid":rid,"name":routes[rid]["route_long_name"],"dir":int(d),
+        days=daymap.get((rows[0]["stop_id"],rows[-1]["stop_id"]),set())
+        out.append({"days":"".join("1" if x in days else "0" for x in DAYNAMES),
+                    "rid":rid,"name":routes[rid]["route_long_name"],"dir":int(d),
                     "train":t["trip_short_name"],"head":t["trip_headsign"],"shape":t["shape_id"],
                     "dep":rows[0]["departure_time"][:5],"stops":seq})
 print("itineraries:",len(out))

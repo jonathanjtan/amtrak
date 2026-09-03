@@ -271,6 +271,8 @@
   .ctl-right{display:flex;gap:8px;flex-wrap:wrap;}
   .pk-msg{font-size:12px;color:var(--accent);margin:0 0 14px;min-height:1.1em;line-height:1.4;}
   .pk-msg:empty{margin-bottom:6px;}
+  .pk-msg.runs{color:var(--muted);margin-top:-8px;}
+  .pk-msg.runs b{color:var(--accent);}
   .connect{display:flex;flex-direction:column;gap:7px;margin:9px 0 2px;}
   .cx{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
   .cx-via{font-size:12px;color:var(--paper);font-weight:600;min-width:8.5em;}

@@ -50,7 +50,10 @@ function servicesFor(a,b){
     if(ib<0) return;
     out.push({i:i,o:ia,e:ib,mins:it.s[ib][1]-it.s[ia][1]});
   });
-  out.sort((x,y)=>x.mins-y.mins);
+  /* a train that does not run on the chosen date is not the quickest option,
+     whatever the timetable says */
+  const runnable=c=>runsOn(ITS[c.i],depDate.value)?0:1;
+  out.sort((x,y)=>runnable(x)-runnable(y)||x.mins-y.mins);
   return out;
 }
 /* Journeys no single train covers. Finds interchange stations served by one
@@ -208,7 +211,9 @@ function fillRouteSel(list,keep){
     const it=ITS[c.i];
     const o=document.createElement("option");
     o.value=c.i+":"+c.o+":"+c.e;
-    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur(c.mins/60);
+    const days=runDays(it);
+    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur(c.mins/60)+
+      (days.length<7?" · "+days.join("/"):"");
     routeSel.appendChild(o);
   });
   routeSel.value=keep||list[0].value||(list[0].i+":"+list[0].o+":"+list[0].e);
@@ -534,6 +539,11 @@ function rebuild(){
   if(+scrub.value>LEG.TOTAL) scrub.value=0;
   const a=LEG.stops[0], b=LEG.stops[LEG.stops.length-1];
   $("legTitle").textContent=shortName(a.name)+" → "+shortName(b.name);
+  const days=runDays(IT);
+  $("runsHint").innerHTML = days.length>=7 ? "" :
+    (runsOn(IT,depDate.value)
+      ? ("This service runs "+listDays(days)+".")
+      : ("<b>This service does not run that day.</b> It runs "+listDays(days)+"."));
   $("legSub").innerHTML=IT.n+(IT.tr?' · train <span class="mono">'+IT.tr+'</span>':'')+
     ' · departs <span class="mono">'+clockAt(0).day+" "+clockAt(0).time+" "+(ZAB[a.tz]||"")+'</span>'+
     ' · <span class="mono">'+fmtDur(LEG.TOTAL)+'</span> · <span class="mono">'+Math.round(legKm()).toLocaleString()+' mi</span>'+
