@@ -779,6 +779,9 @@ function openDefault(){
          leaving the imagery parked on the previous route */
       lmap.invalidateSize(false);
       lmap.fitBounds(L.latLngBounds(LEG.poly),{padding:[24,24],animate:false});
+      const host=$("live-map");
+      if(host) host.setAttribute("aria-label","Satellite map, "+LEG.stops[0].short+
+        " to "+LEG.stops[LEG.stops.length-1].short+", "+LEG.stops.length+" stops");
     };
     window.__recolorLive=function(){const pal=covColors();segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
     window.__onTrain=function(t){

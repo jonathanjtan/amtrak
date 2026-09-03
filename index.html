@@ -413,7 +413,7 @@
   <div id="liveSection">
     <div class="sec-label">Explore live · satellite</div>
     <p class="sub" style="margin:0 0 10px">The same leg on real imagery, colored by the same coverage estimate, for zooming into any stretch of it. This view needs an internet connection. The map above stays fully offline. Tiles are Esri / Maxar &amp; USGS.</p>
-    <div id="live-map"></div>
+    <div id="live-map" role="region" aria-label="Satellite map of the selected leg"></div>
     <p class="dc-note" id="live-note">Pan and zoom freely. The controls at top right switch the imagery between Satellite, Topographic and Streets, and turn the route off when you want to read the ground under it. Stations and scenery markers carry their times; the purple dot is the train.</p>
   </div>
 
@@ -2336,6 +2336,9 @@ function openDefault(){
          leaving the imagery parked on the previous route */
       lmap.invalidateSize(false);
       lmap.fitBounds(L.latLngBounds(LEG.poly),{padding:[24,24],animate:false});
+      const host=$("live-map");
+      if(host) host.setAttribute("aria-label","Satellite map, "+LEG.stops[0].short+
+        " to "+LEG.stops[LEG.stops.length-1].short+", "+LEG.stops.length+" stops");
     };
     window.__recolorLive=function(){const pal=covColors();segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
     window.__onTrain=function(t){
