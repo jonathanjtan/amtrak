@@ -325,6 +325,11 @@
     .wrap{max-width:none;padding:0 4mm;}
     .picker,.pk-msg,.controls,.zoomctl,.maphint,.delayctl,#liveSection,
     .nowline,.tl-cap .k:last-child{display:none!important;}
+    /* a leg of a longer journey keeps its headline on paper — otherwise the
+       printout claims Seattle to Chicago is the whole trip — but not the
+       buttons for switching between options, which do nothing on paper */
+    .pk-msg.on-journey,.pk-msg.runs{display:block!important;font-size:9pt;margin:0 0 6pt;}
+    .pk-msg.on-journey .connect{display:none!important;}
     h1{font-size:22pt;margin:0 0 4pt;}
     .tagline,.sub{font-size:9pt;}
     .sec-label{font-size:8pt;letter-spacing:.2em;margin:14pt 0 6pt;break-after:avoid;}

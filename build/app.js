@@ -205,6 +205,8 @@ function drawJourney(){
   if(!journey) return;
   const J=journey, n=J.list[J.pick].legs.length;
   pkMsg.innerHTML="";
+  /* printed, a journey leg looks like a whole trip unless the headline survives */
+  pkMsg.className="pk-msg on-journey";
   const head=document.createElement("span");
   head.innerHTML=place(J.a)+" → "+place(J.b)+
     " needs "+(n-1===1?"one change":(n-1)+" changes")+". Showing <b>leg "+J.leg+" of "+n+"</b>.";
@@ -306,6 +308,7 @@ function applyChoice(){
   rebuild();
 }
 function repick(preferIdx){
+  pkMsg.className="pk-msg";
   const a=codeFromInput(origIn.value), b=codeFromInput(destIn.value);
   if(!a){pkMsg.textContent="Pick a departure station from the list.";return;}
   if(b&&b===a){pkMsg.textContent="Pick two different stations.";return;}

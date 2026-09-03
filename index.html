@@ -339,6 +339,11 @@
     .wrap{max-width:none;padding:0 4mm;}
     .picker,.pk-msg,.controls,.zoomctl,.maphint,.delayctl,#liveSection,
     .nowline,.tl-cap .k:last-child{display:none!important;}
+    /* a leg of a longer journey keeps its headline on paper — otherwise the
+       printout claims Seattle to Chicago is the whole trip — but not the
+       buttons for switching between options, which do nothing on paper */
+    .pk-msg.on-journey,.pk-msg.runs{display:block!important;font-size:9pt;margin:0 0 6pt;}
+    .pk-msg.on-journey .connect{display:none!important;}
     h1{font-size:22pt;margin:0 0 4pt;}
     .tagline,.sub{font-size:9pt;}
     .sec-label{font-size:8pt;letter-spacing:.2em;margin:14pt 0 6pt;break-after:avoid;}
@@ -1762,6 +1767,8 @@ function drawJourney(){
   if(!journey) return;
   const J=journey, n=J.list[J.pick].legs.length;
   pkMsg.innerHTML="";
+  /* printed, a journey leg looks like a whole trip unless the headline survives */
+  pkMsg.className="pk-msg on-journey";
   const head=document.createElement("span");
   head.innerHTML=place(J.a)+" → "+place(J.b)+
     " needs "+(n-1===1?"one change":(n-1)+" changes")+". Showing <b>leg "+J.leg+" of "+n+"</b>.";
@@ -1863,6 +1870,7 @@ function applyChoice(){
   rebuild();
 }
 function repick(preferIdx){
+  pkMsg.className="pk-msg";
   const a=codeFromInput(origIn.value), b=codeFromInput(destIn.value);
   if(!a){pkMsg.textContent="Pick a departure station from the list.";return;}
   if(b&&b===a){pkMsg.textContent="Pick two different stations.";return;}
