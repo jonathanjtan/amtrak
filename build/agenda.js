@@ -8,14 +8,14 @@ function sightNow(t){const w=Math.max(0.18,LEG.TOTAL/160);
   for(const s of LEG.sights) if(Math.abs(s.t-t)<w) return s; return null;}
 function nextSight(t){for(const s of LEG.sights) if(s.t>t) return s; return null;}
 function nextStop(t){for(const s of LEG.stops) if(s.t>t+1e-9) return s; return null;}
-function stopName(i){return shortName(LEG.stops[Math.max(0,Math.min(LEG.stops.length-1,i))].name);}
+function stopName(i){return LEG.stops[Math.max(0,Math.min(LEG.stops.length-1,i))].short;}
 
 function agEvents(){
   const ev=[];
   LEG.stops.forEach((s,i)=>{
     if(i===0) return;
     const dw=IT.s[O+i][2]||0;
-    ev.push({t:s.t,pri:2,title:shortName(s.name),
+    ev.push({t:s.t,pri:2,title:s.short,
       sub:dw>=8?("station stop · about "+dw+" min on the platform"):"station stop"});
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
@@ -83,12 +83,12 @@ function agTipList(t){
   if(st){
     const i=LEG.stops.indexOf(st), dw=IT.s[O+i][2]||0;
     if(st.t-t<=0.6&&dw>=10)
-      add("▮",'<b>'+shortName(st.name)+' in ~'+fmtDur(st.t-t)+'.</b> About '+dw+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
+      add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+dw+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
   }
   /* on a leg that hands you to another train, the change is the thing to know */
   const cx=(typeof journey!=="undefined"&&journey)?journeyLegContext():null;
   if(cx&&LEG.TOTAL-t<=Math.max(2,LEG.TOTAL/8)){
-    const where=shortName(stationName(cx.via));
+    const where=place(cx.via);
     if(cx.slack<=0)
       add("⇄",'<b>You would miss the change at '+where+'.</b> The '+cx.nextName+
         ' leaves at ~'+cx.depTime+', before this train gets in. '+
@@ -117,9 +117,13 @@ function updateAgenda(t){
   const pal=covColors();
   agCarrierEl.textContent=CARRIER_NAME[carrier];
   agNextEl.innerHTML="";agTipsEl.innerHTML="";
+  /* The dot carries the signal state in colour alone; say it out loud too. */
+  const SAID={good:"signal usable",spotty:"signal spotty",dead:"no signal"};
+  const dot=st=>'<span class="ag-dot" style="background:'+pal[st]+'"></span>'+
+    '<span class="sr">'+SAID[st]+' · </span>';
   const paint=items=>items.forEach(e=>{
     const li=document.createElement("li");li.className="ag-item";
-    li.innerHTML='<span class="ag-dot" style="background:'+pal[covAt(e.t)]+'"></span>'+
+    li.innerHTML=dot(covAt(e.t))+
       '<span class="ag-when">'+clockAt(e.t).time+'</span>'+
       '<span class="ag-what"><b>'+e.title+'</b><span>'+e.sub+'</span></span>';
     agNextEl.appendChild(li);});
@@ -133,7 +137,7 @@ function updateAgenda(t){
     return;
   }
   if(t<0){
-    agNowEl.innerHTML='<div class="ag-hero"><p class="ag-where">Not departed: '+shortName(LEG.stops[0].name)+'</p></div>'+
+    agNowEl.innerHTML='<div class="ag-hero"><p class="ag-where">Not departed: '+LEG.stops[0].short+'</p></div>'+
       '<p class="ag-stamp">leaves in '+fmtDur(-t)+' · '+clockAt(0).full+'</p>';
     paint(agEvents().filter(e=>e.t>=0).slice(0,5));
     const worst=LEG.cov.filter(c=>c.st==="dead").reduce((a,c)=>a+(c.t1-c.t0),0);
@@ -149,7 +153,7 @@ function updateAgenda(t){
     const last=LEG.stops[LEG.stops.length-1];
     agNowEl.innerHTML='<div class="ag-hero"><span class="chip" style="background:'+pal[covAt(LEG.TOTAL)]+';color:#0c1116">'+STAT[covAt(LEG.TOTAL)]+'</span><p class="ag-where">Arrived: '+last.name+'</p></div>'+
       '<p class="ag-stamp">'+fmtDur(LEG.TOTAL)+' · '+Math.round(legKm())+' mi</p>';
-    agNextEl.innerHTML='<li class="ag-item"><span class="ag-dot" style="background:'+pal[covAt(LEG.TOTAL)]+'"></span><span class="ag-when">—</span><span class="ag-what"><b>End of the line</b><span>nothing further on this leg</span></span></li>';
+    agNextEl.innerHTML='<li class="ag-item">'+dot(covAt(LEG.TOTAL))+'<span class="ag-when">—</span><span class="ag-what"><b>End of the line</b><span>nothing further on this leg</span></span></li>';
     tipList([{ic:"✓",html:'<b>Back on the network.</b> Anything you queued through the dead stretches should be going out now.'}]);
     return;
   }
@@ -157,7 +161,7 @@ function updateAgenda(t){
         atStation=(t-LEG.stops[i].t)<0.12;
   agNowEl.innerHTML=
     '<div class="ag-hero"><span class="chip" style="background:'+pal[st]+';color:'+((theme==="light"&&st==="spotty")?"#fff":"#0c1116")+'">'+STAT[st]+'</span>'+
-    '<p class="ag-where">'+(atStation?("At "+shortName(LEG.stops[i].name)):(stopName(i)+" → "+stopName(i+1)))+'</p></div>'+
+    '<p class="ag-where">'+(atStation?("At "+LEG.stops[i].short):(stopName(i)+" → "+stopName(i+1)))+'</p></div>'+
     '<p class="ag-stamp">'+c.full+' · '+fmtDur(t)+' in · '+fmtDur(LEG.TOTAL-t)+' to '+stopName(LEG.stops.length-1)+'</p>'+
     '<div class="ag-rows" id="agRows"></div>';
   const rows=[], nx=run.t1<LEG.TOTAL-1e-6?covAt(run.t1+1e-6):null;
@@ -181,7 +185,7 @@ function updateAgenda(t){
     d.innerHTML='<span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span>';host.appendChild(d);});
   const up=agEvents().filter(e=>e.t>t+0.02).slice(0,5);
   if(up.length) paint(up);
-  else agNextEl.innerHTML='<li class="ag-item"><span class="ag-dot" style="background:'+pal[st]+'"></span><span class="ag-when">—</span><span class="ag-what"><b>'+stopName(LEG.stops.length-1)+'</b><span>nothing scheduled before arrival</span></span></li>';
+  else agNextEl.innerHTML='<li class="ag-item">'+dot(st)+'<span class="ag-when">—</span><span class="ag-what"><b>'+stopName(LEG.stops.length-1)+'</b><span>nothing scheduled before arrival</span></span></li>';
   tipList(agTipList(t));
 }
 function legKm(){return LEG.km*0.621371;}

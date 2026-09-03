@@ -50,6 +50,22 @@ const tidy=n=>n.replace(/\bMc([a-z])/g,(m,x)=>"Mc"+x.toUpperCase()).replace(/^Ny
 const stationName=c=>NAME_FIX[c]||tidy(ST[c][0]);
 const stopLabel=c=>stationName(c)+(ST[c][4]?", "+ST[c][4]:"")+" ("+c+")";
 const searchKey=c=>(stationName(c)+" "+(ST[c][4]||"")+" "+c+" "+(ALIAS[c]||"")).toLowerCase();
+/* Headings want the city, not the paperwork: "Chicago Union Station, IL" reads
+   as Chicago. But nineteen names on the network belong to more than one town —
+   Portland OR and Portland ME, Springfield IL and MA, three Burlingtons — and
+   for those the state is the whole point, so it stays. */
+const bareName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"").trim();
+const AMBIG=(()=>{
+  const n={},seen={},amb=new Set();
+  ITS.forEach(it=>it.s.forEach(x=>{const c=x[0];
+    if(seen[c]||!ST[c])return; seen[c]=1;
+    const b=bareName(stationName(c)); n[b]=(n[b]||0)+1;}));
+  for(const b in n) if(n[b]>1) amb.add(b);
+  return amb;
+})();
+const shortName=(name,state)=>{const b=bareName(name);
+  return (state&&AMBIG.has(b))?b+", "+state:b;};
+const place=c=>shortName(stationName(c),ST[c]&&ST[c][4]);
 
 
 /* ---------- time zones ---------- */
@@ -206,7 +222,7 @@ function buildLeg(){
   const L={stops:[],poly:[],polyT:[],cov:[],dep:inst,TOTAL:0};
   for(let i=o;i<=e;i++){
     const c=stops[i][0], s=ST[c], gi=at(i);
-    L.stops.push({code:c,name:stationName(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
+    L.stops.push({code:c,name:stationName(c),short:place(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
                   t:(gi-inst)/3600000, inst:gi});
   }
   L.TOTAL=L.stops[L.stops.length-1].t;

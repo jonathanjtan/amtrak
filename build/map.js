@@ -150,7 +150,7 @@ function drawMap(){
   /* Describe the picture for anyone who cannot see it. The static label said
      the same thing for every route. */
   (function(){
-    const a=shortName(LEG.stops[0].name), b=shortName(LEG.stops[N-1].name);
+    const a=LEG.stops[0].short, b=LEG.stops[N-1].short;
     const tot={good:0,spotty:0,dead:0};
     LEG.cov.forEach(c=>{tot[c.st]+=c.t1-c.t0;});
     const bits=[];

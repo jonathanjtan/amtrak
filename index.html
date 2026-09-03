@@ -224,6 +224,10 @@
     padding:8px 0;border-top:1px solid var(--rail);}
   .ag-item:first-child,.ag-tip:first-child{border-top:0;padding-top:0;}
   .ag-dot{width:8px;height:8px;border-radius:50%;align-self:center;}
+  /* Read aloud but not drawn: the coverage dots are colour alone on screen,
+     so the state they encode has to reach a screen reader some other way. */
+  .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+      clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;}
   .ag-when{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--chrome);white-space:nowrap;}
   .ag-what{font-size:12.5px;line-height:1.35;}
   .ag-what b{font-weight:600;}
@@ -544,6 +548,22 @@ const tidy=n=>n.replace(/\bMc([a-z])/g,(m,x)=>"Mc"+x.toUpperCase()).replace(/^Ny
 const stationName=c=>NAME_FIX[c]||tidy(ST[c][0]);
 const stopLabel=c=>stationName(c)+(ST[c][4]?", "+ST[c][4]:"")+" ("+c+")";
 const searchKey=c=>(stationName(c)+" "+(ST[c][4]||"")+" "+c+" "+(ALIAS[c]||"")).toLowerCase();
+/* Headings want the city, not the paperwork: "Chicago Union Station, IL" reads
+   as Chicago. But nineteen names on the network belong to more than one town —
+   Portland OR and Portland ME, Springfield IL and MA, three Burlingtons — and
+   for those the state is the whole point, so it stays. */
+const bareName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"").trim();
+const AMBIG=(()=>{
+  const n={},seen={},amb=new Set();
+  ITS.forEach(it=>it.s.forEach(x=>{const c=x[0];
+    if(seen[c]||!ST[c])return; seen[c]=1;
+    const b=bareName(stationName(c)); n[b]=(n[b]||0)+1;}));
+  for(const b in n) if(n[b]>1) amb.add(b);
+  return amb;
+})();
+const shortName=(name,state)=>{const b=bareName(name);
+  return (state&&AMBIG.has(b))?b+", "+state:b;};
+const place=c=>shortName(stationName(c),ST[c]&&ST[c][4]);
 
 
 /* ---------- time zones ---------- */
@@ -700,7 +720,7 @@ function buildLeg(){
   const L={stops:[],poly:[],polyT:[],cov:[],dep:inst,TOTAL:0};
   for(let i=o;i<=e;i++){
     const c=stops[i][0], s=ST[c], gi=at(i);
-    L.stops.push({code:c,name:stationName(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
+    L.stops.push({code:c,name:stationName(c),short:place(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
                   t:(gi-inst)/3600000, inst:gi});
   }
   L.TOTAL=L.stops[L.stops.length-1].t;
@@ -981,7 +1001,7 @@ function drawMap(){
   /* Describe the picture for anyone who cannot see it. The static label said
      the same thing for every route. */
   (function(){
-    const a=shortName(LEG.stops[0].name), b=shortName(LEG.stops[N-1].name);
+    const a=LEG.stops[0].short, b=LEG.stops[N-1].short;
     const tot={good:0,spotty:0,dead:0};
     LEG.cov.forEach(c=>{tot[c.st]+=c.t1-c.t0;});
     const bits=[];
@@ -1191,7 +1211,7 @@ function drawCards(){
     const a=stopIndexAt(r.t0+1e-6), b=Math.min(LEG.stops.length-1,stopIndexAt(r.t1-1e-6)+1);
     const c0=clockAt(r.t0),c1=clockAt(r.t1);
     const d=document.createElement("div");d.className="dz";
-    d.innerHTML='<div class="top"><h3>'+shortName(LEG.stops[a].name)+' → '+shortName(LEG.stops[b].name)+'</h3>'+
+    d.innerHTML='<div class="top"><h3>'+LEG.stops[a].short+' → '+LEG.stops[b].short+'</h3>'+
       '<span class="chip" style="background:'+pal[r.st]+';color:'+((theme==="light"&&r.st==="spotty")?"#fff":"#0c1116")+'">'+STAT[r.st]+'</span></div>'+
       '<div class="when">'+c0.day+' ~'+c0.time+'–'+c1.time+' · '+fmtDur(r.t1-r.t0)+'</div>'+
       '<p>'+(r.st==="dead"?"Expect nothing at all through here. ":"Patchy through here, with gaps between towns. ")+
@@ -1199,7 +1219,6 @@ function drawCards(){
     cards.appendChild(d);
   });
 }
-const shortName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"").trim();
 
 /* ================= sights ================= */
 function compass(dir){
@@ -1304,14 +1323,14 @@ function sightNow(t){const w=Math.max(0.18,LEG.TOTAL/160);
   for(const s of LEG.sights) if(Math.abs(s.t-t)<w) return s; return null;}
 function nextSight(t){for(const s of LEG.sights) if(s.t>t) return s; return null;}
 function nextStop(t){for(const s of LEG.stops) if(s.t>t+1e-9) return s; return null;}
-function stopName(i){return shortName(LEG.stops[Math.max(0,Math.min(LEG.stops.length-1,i))].name);}
+function stopName(i){return LEG.stops[Math.max(0,Math.min(LEG.stops.length-1,i))].short;}
 
 function agEvents(){
   const ev=[];
   LEG.stops.forEach((s,i)=>{
     if(i===0) return;
     const dw=IT.s[O+i][2]||0;
-    ev.push({t:s.t,pri:2,title:shortName(s.name),
+    ev.push({t:s.t,pri:2,title:s.short,
       sub:dw>=8?("station stop · about "+dw+" min on the platform"):"station stop"});
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
@@ -1379,12 +1398,12 @@ function agTipList(t){
   if(st){
     const i=LEG.stops.indexOf(st), dw=IT.s[O+i][2]||0;
     if(st.t-t<=0.6&&dw>=10)
-      add("▮",'<b>'+shortName(st.name)+' in ~'+fmtDur(st.t-t)+'.</b> About '+dw+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
+      add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+dw+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
   }
   /* on a leg that hands you to another train, the change is the thing to know */
   const cx=(typeof journey!=="undefined"&&journey)?journeyLegContext():null;
   if(cx&&LEG.TOTAL-t<=Math.max(2,LEG.TOTAL/8)){
-    const where=shortName(stationName(cx.via));
+    const where=place(cx.via);
     if(cx.slack<=0)
       add("⇄",'<b>You would miss the change at '+where+'.</b> The '+cx.nextName+
         ' leaves at ~'+cx.depTime+', before this train gets in. '+
@@ -1413,9 +1432,13 @@ function updateAgenda(t){
   const pal=covColors();
   agCarrierEl.textContent=CARRIER_NAME[carrier];
   agNextEl.innerHTML="";agTipsEl.innerHTML="";
+  /* The dot carries the signal state in colour alone; say it out loud too. */
+  const SAID={good:"signal usable",spotty:"signal spotty",dead:"no signal"};
+  const dot=st=>'<span class="ag-dot" style="background:'+pal[st]+'"></span>'+
+    '<span class="sr">'+SAID[st]+' · </span>';
   const paint=items=>items.forEach(e=>{
     const li=document.createElement("li");li.className="ag-item";
-    li.innerHTML='<span class="ag-dot" style="background:'+pal[covAt(e.t)]+'"></span>'+
+    li.innerHTML=dot(covAt(e.t))+
       '<span class="ag-when">'+clockAt(e.t).time+'</span>'+
       '<span class="ag-what"><b>'+e.title+'</b><span>'+e.sub+'</span></span>';
     agNextEl.appendChild(li);});
@@ -1429,7 +1452,7 @@ function updateAgenda(t){
     return;
   }
   if(t<0){
-    agNowEl.innerHTML='<div class="ag-hero"><p class="ag-where">Not departed: '+shortName(LEG.stops[0].name)+'</p></div>'+
+    agNowEl.innerHTML='<div class="ag-hero"><p class="ag-where">Not departed: '+LEG.stops[0].short+'</p></div>'+
       '<p class="ag-stamp">leaves in '+fmtDur(-t)+' · '+clockAt(0).full+'</p>';
     paint(agEvents().filter(e=>e.t>=0).slice(0,5));
     const worst=LEG.cov.filter(c=>c.st==="dead").reduce((a,c)=>a+(c.t1-c.t0),0);
@@ -1445,7 +1468,7 @@ function updateAgenda(t){
     const last=LEG.stops[LEG.stops.length-1];
     agNowEl.innerHTML='<div class="ag-hero"><span class="chip" style="background:'+pal[covAt(LEG.TOTAL)]+';color:#0c1116">'+STAT[covAt(LEG.TOTAL)]+'</span><p class="ag-where">Arrived: '+last.name+'</p></div>'+
       '<p class="ag-stamp">'+fmtDur(LEG.TOTAL)+' · '+Math.round(legKm())+' mi</p>';
-    agNextEl.innerHTML='<li class="ag-item"><span class="ag-dot" style="background:'+pal[covAt(LEG.TOTAL)]+'"></span><span class="ag-when">—</span><span class="ag-what"><b>End of the line</b><span>nothing further on this leg</span></span></li>';
+    agNextEl.innerHTML='<li class="ag-item">'+dot(covAt(LEG.TOTAL))+'<span class="ag-when">—</span><span class="ag-what"><b>End of the line</b><span>nothing further on this leg</span></span></li>';
     tipList([{ic:"✓",html:'<b>Back on the network.</b> Anything you queued through the dead stretches should be going out now.'}]);
     return;
   }
@@ -1453,7 +1476,7 @@ function updateAgenda(t){
         atStation=(t-LEG.stops[i].t)<0.12;
   agNowEl.innerHTML=
     '<div class="ag-hero"><span class="chip" style="background:'+pal[st]+';color:'+((theme==="light"&&st==="spotty")?"#fff":"#0c1116")+'">'+STAT[st]+'</span>'+
-    '<p class="ag-where">'+(atStation?("At "+shortName(LEG.stops[i].name)):(stopName(i)+" → "+stopName(i+1)))+'</p></div>'+
+    '<p class="ag-where">'+(atStation?("At "+LEG.stops[i].short):(stopName(i)+" → "+stopName(i+1)))+'</p></div>'+
     '<p class="ag-stamp">'+c.full+' · '+fmtDur(t)+' in · '+fmtDur(LEG.TOTAL-t)+' to '+stopName(LEG.stops.length-1)+'</p>'+
     '<div class="ag-rows" id="agRows"></div>';
   const rows=[], nx=run.t1<LEG.TOTAL-1e-6?covAt(run.t1+1e-6):null;
@@ -1477,7 +1500,7 @@ function updateAgenda(t){
     d.innerHTML='<span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span>';host.appendChild(d);});
   const up=agEvents().filter(e=>e.t>t+0.02).slice(0,5);
   if(up.length) paint(up);
-  else agNextEl.innerHTML='<li class="ag-item"><span class="ag-dot" style="background:'+pal[st]+'"></span><span class="ag-when">—</span><span class="ag-what"><b>'+stopName(LEG.stops.length-1)+'</b><span>nothing scheduled before arrival</span></span></li>';
+  else agNextEl.innerHTML='<li class="ag-item">'+dot(st)+'<span class="ag-when">—</span><span class="ag-what"><b>'+stopName(LEG.stops.length-1)+'</b><span>nothing scheduled before arrival</span></span></li>';
   tipList(agTipList(t));
 }
 function legKm(){return LEG.km*0.621371;}
@@ -1659,6 +1682,7 @@ function showConnections(a,b){
     return;
   }
   journey={a:a,b:b,list:list,pick:0,leg:1,start:depDate.value};
+  origIn.value=stopLabel(a); destIn.value=stopLabel(b);   /* say which stations were matched */
   drawJourney();
   loadLeg(list[0].legs[0],0);                /* show the first leg rather than nothing */
 }
@@ -1666,8 +1690,8 @@ function showConnections(a,b){
    calls at, which is worth knowing before you go looking for a connection. */
 function deadEndMessage(a,b){
   const {fromA}=reachMaps(a,b);
-  const generic="No Amtrak route in the feed joins "+shortName(stationName(a))+" and "+
-                shortName(stationName(b))+" in under three changes.";
+  const generic="No Amtrak route in the feed joins "+place(a)+" and "+
+                place(b)+" in under three changes.";
   if(!fromA.size) return generic;
   let far=null;
   fromA.forEach((v,x)=>{ if(!far||v.mins>far.mins) far={code:x,mins:v.mins}; });
@@ -1680,8 +1704,8 @@ function deadEndMessage(a,b){
     return false;
   });
   if(onward) return generic;
-  return "Trains out of "+shortName(stationName(a))+" reach as far as "+stationName(far.code)+
-         ", and no Amtrak route continues from there. Reaching "+shortName(stationName(b))+
+  return "Trains out of "+place(a)+" reach as far as "+stationName(far.code)+
+         ", and no Amtrak route continues from there. Reaching "+place(b)+
          " means changing stations by some other means, which breaks the journey in two.";
 }
 function drawJourney(){
@@ -1689,14 +1713,14 @@ function drawJourney(){
   const J=journey, n=J.list[J.pick].legs.length;
   pkMsg.innerHTML="";
   const head=document.createElement("span");
-  head.innerHTML=shortName(stationName(J.a))+" → "+shortName(stationName(J.b))+
+  head.innerHTML=place(J.a)+" → "+place(J.b)+
     " needs "+(n-1===1?"one change":(n-1)+" changes")+". Showing <b>leg "+J.leg+" of "+n+"</b>.";
   pkMsg.appendChild(head);
   const box=document.createElement("div"); box.className="connect";
   J.list.forEach((c,ci)=>{
     const row=document.createElement("div"); row.className="cx";
     const waitTxt=(c.waits||[]).map(w=>fmtDur(w/60)).join(" + ");
-    row.innerHTML='<span class="cx-via">via '+c.vias.map(v=>shortName(stationName(v))).join(", ")+'</span>'+
+    row.innerHTML='<span class="cx-via">via '+c.vias.map(place).join(", ")+'</span>'+
       '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+
       (journeyArrival(c)?", in "+journeyArrival(c):"")+'</span>';
     c.legs.forEach((leg,li)=>{
@@ -1706,7 +1730,7 @@ function drawJourney(){
       btn.className="cx-leg"+(on?" on":"");
       btn.setAttribute("aria-pressed",String(on));
       btn.setAttribute("aria-label","Leg "+(li+1)+" of "+c.legs.length+", "+ITS[leg.i].n+
-        ", "+fmtDur(leg.mins/60)+", via "+c.vias.map(v=>shortName(stationName(v))).join(" and "));
+        ", "+fmtDur(leg.mins/60)+", via "+c.vias.map(place).join(" and "));
       btn.innerHTML='<b>'+(li+1)+'</b> '+ITS[leg.i].n+' <span class="mono">'+fmtDur(leg.mins/60)+'</span>';
       btn.addEventListener("click",()=>{J.pick=ci;J.leg=li+1;drawJourney();
         loadLeg(leg,(c.offsets&&c.offsets[li])||0);});
@@ -1730,6 +1754,14 @@ function journeyArrival(c){
     return f.day+" "+f.time;
   }catch(e){ return ""; }
 }
+/* The boxes say where you asked to go. While a journey is on screen that is the
+   whole trip, not the leg being shown: overwriting them with the interchange
+   made the next edit to either box quietly re-plan to Chicago instead of to
+   New York, because Chicago is what the box now said. */
+function showEnds(from,to){
+  if(journey) return;
+  origIn.value=stopLabel(from); destIn.value=stopLabel(to);
+}
 function loadLeg(c,dayOffset){
   /* leg two of a journey departs after the ride and the wait, not on the day
      you set for leg one */
@@ -1738,7 +1770,7 @@ function loadLeg(c,dayOffset){
   else if(journey&&journey.start)
     depDate.value=journey.start;
   IT=ITS[c.i]; O=c.o; E=c.e;
-  origIn.value=stopLabel(IT.s[O][0]); destIn.value=stopLabel(IT.s[E][0]);
+  showEnds(IT.s[O][0],IT.s[E][0]);
   const list=servicesFor(IT.s[O][0],IT.s[E][0]).filter(x=>x.e>x.o&&x.mins>0);
   if(list.length) fillRouteSel(list,c.i+":"+c.o+":"+c.e);
   applyChoice();
@@ -1762,7 +1794,7 @@ function applyChoice(){
   if(!p.length||isNaN(p[0])) return;
   IT=ITS[p[0]];O=p[1];E=p[2];
   fromCode=IT.s[O][0];toCode=IT.s[E][0];
-  origIn.value=stopLabel(fromCode);destIn.value=stopLabel(toCode);
+  showEnds(fromCode,toCode);
   rebuild();
 }
 function repick(preferIdx){
@@ -1772,7 +1804,7 @@ function repick(preferIdx){
   const list=servicesFor(a,b||null).filter(c=>c.e>c.o&&c.mins>0);
   if(!list.length){
     if(b) showConnections(a,b);
-    else pkMsg.textContent=shortName(stationName(a))+" is the end of the line on every route serving it. Name a destination, or start somewhere else.";
+    else pkMsg.textContent=place(a)+" is the end of the line on every route serving it. Name a destination, or start somewhere else.";
     return;
   }
   journey=null;
@@ -1911,7 +1943,7 @@ function updateTrain(){
   trHalo.setAttribute("cx",x);trHalo.setAttribute("cy",y);
   trCore.setAttribute("cx",x);trCore.setAttribute("cy",y);
   trGlyph.setAttribute("x",x);trGlyph.setAttribute("y",y-11);
-  if(t>=LEG.TOTAL){liveStatus.textContent="arrived · "+shortName(LEG.stops[LEG.stops.length-1].name);}
+  if(t>=LEG.TOTAL){liveStatus.textContent="arrived · "+LEG.stops[LEG.stops.length-1].short;}
   else{const i=stopIndexAt(t);
     liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
@@ -1981,7 +2013,7 @@ function applyDelay(h){
   if(mins===0) dv.textContent="On schedule";
   else if(mins<0) dv.textContent="~"+(-mins)+" min early";
   else{const H=Math.floor(mins/60),M=mins%60;
-    dv.textContent="~"+(H?H+"h ":"")+M+"m late · in "+shortName(LEG.stops[LEG.stops.length-1].name)+" ~"+clockAt(LEG.TOTAL).time;}
+    dv.textContent="~"+(H?H+"h ":"")+M+"m late · in "+LEG.stops[LEG.stops.length-1].short+" ~"+clockAt(LEG.TOTAL).time;}
   /* everything that prints a clock time or counts a meal has to follow the delay,
      not just the strip */
   wallBands(LEG);
@@ -2005,7 +2037,7 @@ function fillAnchor(){
   const sel=$("anchorStop");sel.innerHTML="";
   LEG.stops.forEach((s,i)=>{
     const o=document.createElement("option");o.value=i;
-    o.textContent=shortName(s.name)+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
+    o.textContent=s.short+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
 }
 
 /* ================= remembered state =================
@@ -2131,7 +2163,7 @@ function rebuild(){
   scrub.max=LEG.TOTAL.toFixed(2);
   if(+scrub.value>LEG.TOTAL) scrub.value=0;
   const a=LEG.stops[0], b=LEG.stops[LEG.stops.length-1];
-  $("legTitle").textContent=shortName(a.name)+" → "+shortName(b.name);
+  $("legTitle").textContent=a.short+" → "+b.short;
   const days=runDays(IT);
   $("runsHint").innerHTML = days.length>=7 ? "" :
     (runsOn(IT,depDate.value)
@@ -2146,7 +2178,7 @@ function rebuild(){
   if(window.__rebuildLive)window.__rebuildLive();
   updateTrain();
   writeURL();
-  document.title=shortName(a.name)+" → "+shortName(b.name)+" · Amtrak signal map";
+  document.title=a.short+" → "+b.short+" · Amtrak signal map";
 }
 (function scope(){
   const el=$("dataScope");

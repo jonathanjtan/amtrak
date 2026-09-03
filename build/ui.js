@@ -145,7 +145,7 @@ function drawCards(){
     const a=stopIndexAt(r.t0+1e-6), b=Math.min(LEG.stops.length-1,stopIndexAt(r.t1-1e-6)+1);
     const c0=clockAt(r.t0),c1=clockAt(r.t1);
     const d=document.createElement("div");d.className="dz";
-    d.innerHTML='<div class="top"><h3>'+shortName(LEG.stops[a].name)+' → '+shortName(LEG.stops[b].name)+'</h3>'+
+    d.innerHTML='<div class="top"><h3>'+LEG.stops[a].short+' → '+LEG.stops[b].short+'</h3>'+
       '<span class="chip" style="background:'+pal[r.st]+';color:'+((theme==="light"&&r.st==="spotty")?"#fff":"#0c1116")+'">'+STAT[r.st]+'</span></div>'+
       '<div class="when">'+c0.day+' ~'+c0.time+'–'+c1.time+' · '+fmtDur(r.t1-r.t0)+'</div>'+
       '<p>'+(r.st==="dead"?"Expect nothing at all through here. ":"Patchy through here, with gaps between towns. ")+
@@ -153,7 +153,6 @@ function drawCards(){
     cards.appendChild(d);
   });
 }
-const shortName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"").trim();
 
 /* ================= sights ================= */
 function compass(dir){

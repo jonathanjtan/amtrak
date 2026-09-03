@@ -175,6 +175,7 @@ function showConnections(a,b){
     return;
   }
   journey={a:a,b:b,list:list,pick:0,leg:1,start:depDate.value};
+  origIn.value=stopLabel(a); destIn.value=stopLabel(b);   /* say which stations were matched */
   drawJourney();
   loadLeg(list[0].legs[0],0);                /* show the first leg rather than nothing */
 }
@@ -182,8 +183,8 @@ function showConnections(a,b){
    calls at, which is worth knowing before you go looking for a connection. */
 function deadEndMessage(a,b){
   const {fromA}=reachMaps(a,b);
-  const generic="No Amtrak route in the feed joins "+shortName(stationName(a))+" and "+
-                shortName(stationName(b))+" in under three changes.";
+  const generic="No Amtrak route in the feed joins "+place(a)+" and "+
+                place(b)+" in under three changes.";
   if(!fromA.size) return generic;
   let far=null;
   fromA.forEach((v,x)=>{ if(!far||v.mins>far.mins) far={code:x,mins:v.mins}; });
@@ -196,8 +197,8 @@ function deadEndMessage(a,b){
     return false;
   });
   if(onward) return generic;
-  return "Trains out of "+shortName(stationName(a))+" reach as far as "+stationName(far.code)+
-         ", and no Amtrak route continues from there. Reaching "+shortName(stationName(b))+
+  return "Trains out of "+place(a)+" reach as far as "+stationName(far.code)+
+         ", and no Amtrak route continues from there. Reaching "+place(b)+
          " means changing stations by some other means, which breaks the journey in two.";
 }
 function drawJourney(){
@@ -205,14 +206,14 @@ function drawJourney(){
   const J=journey, n=J.list[J.pick].legs.length;
   pkMsg.innerHTML="";
   const head=document.createElement("span");
-  head.innerHTML=shortName(stationName(J.a))+" → "+shortName(stationName(J.b))+
+  head.innerHTML=place(J.a)+" → "+place(J.b)+
     " needs "+(n-1===1?"one change":(n-1)+" changes")+". Showing <b>leg "+J.leg+" of "+n+"</b>.";
   pkMsg.appendChild(head);
   const box=document.createElement("div"); box.className="connect";
   J.list.forEach((c,ci)=>{
     const row=document.createElement("div"); row.className="cx";
     const waitTxt=(c.waits||[]).map(w=>fmtDur(w/60)).join(" + ");
-    row.innerHTML='<span class="cx-via">via '+c.vias.map(v=>shortName(stationName(v))).join(", ")+'</span>'+
+    row.innerHTML='<span class="cx-via">via '+c.vias.map(place).join(", ")+'</span>'+
       '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+
       (journeyArrival(c)?", in "+journeyArrival(c):"")+'</span>';
     c.legs.forEach((leg,li)=>{
@@ -222,7 +223,7 @@ function drawJourney(){
       btn.className="cx-leg"+(on?" on":"");
       btn.setAttribute("aria-pressed",String(on));
       btn.setAttribute("aria-label","Leg "+(li+1)+" of "+c.legs.length+", "+ITS[leg.i].n+
-        ", "+fmtDur(leg.mins/60)+", via "+c.vias.map(v=>shortName(stationName(v))).join(" and "));
+        ", "+fmtDur(leg.mins/60)+", via "+c.vias.map(place).join(" and "));
       btn.innerHTML='<b>'+(li+1)+'</b> '+ITS[leg.i].n+' <span class="mono">'+fmtDur(leg.mins/60)+'</span>';
       btn.addEventListener("click",()=>{J.pick=ci;J.leg=li+1;drawJourney();
         loadLeg(leg,(c.offsets&&c.offsets[li])||0);});
@@ -246,6 +247,14 @@ function journeyArrival(c){
     return f.day+" "+f.time;
   }catch(e){ return ""; }
 }
+/* The boxes say where you asked to go. While a journey is on screen that is the
+   whole trip, not the leg being shown: overwriting them with the interchange
+   made the next edit to either box quietly re-plan to Chicago instead of to
+   New York, because Chicago is what the box now said. */
+function showEnds(from,to){
+  if(journey) return;
+  origIn.value=stopLabel(from); destIn.value=stopLabel(to);
+}
 function loadLeg(c,dayOffset){
   /* leg two of a journey departs after the ride and the wait, not on the day
      you set for leg one */
@@ -254,7 +263,7 @@ function loadLeg(c,dayOffset){
   else if(journey&&journey.start)
     depDate.value=journey.start;
   IT=ITS[c.i]; O=c.o; E=c.e;
-  origIn.value=stopLabel(IT.s[O][0]); destIn.value=stopLabel(IT.s[E][0]);
+  showEnds(IT.s[O][0],IT.s[E][0]);
   const list=servicesFor(IT.s[O][0],IT.s[E][0]).filter(x=>x.e>x.o&&x.mins>0);
   if(list.length) fillRouteSel(list,c.i+":"+c.o+":"+c.e);
   applyChoice();
@@ -278,7 +287,7 @@ function applyChoice(){
   if(!p.length||isNaN(p[0])) return;
   IT=ITS[p[0]];O=p[1];E=p[2];
   fromCode=IT.s[O][0];toCode=IT.s[E][0];
-  origIn.value=stopLabel(fromCode);destIn.value=stopLabel(toCode);
+  showEnds(fromCode,toCode);
   rebuild();
 }
 function repick(preferIdx){
@@ -288,7 +297,7 @@ function repick(preferIdx){
   const list=servicesFor(a,b||null).filter(c=>c.e>c.o&&c.mins>0);
   if(!list.length){
     if(b) showConnections(a,b);
-    else pkMsg.textContent=shortName(stationName(a))+" is the end of the line on every route serving it. Name a destination, or start somewhere else.";
+    else pkMsg.textContent=place(a)+" is the end of the line on every route serving it. Name a destination, or start somewhere else.";
     return;
   }
   journey=null;
@@ -427,7 +436,7 @@ function updateTrain(){
   trHalo.setAttribute("cx",x);trHalo.setAttribute("cy",y);
   trCore.setAttribute("cx",x);trCore.setAttribute("cy",y);
   trGlyph.setAttribute("x",x);trGlyph.setAttribute("y",y-11);
-  if(t>=LEG.TOTAL){liveStatus.textContent="arrived · "+shortName(LEG.stops[LEG.stops.length-1].name);}
+  if(t>=LEG.TOTAL){liveStatus.textContent="arrived · "+LEG.stops[LEG.stops.length-1].short;}
   else{const i=stopIndexAt(t);
     liveStatus.textContent=fmtDur(t)+" in · past "+stopName(i)+" · next "+stopName(i+1);}
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
@@ -497,7 +506,7 @@ function applyDelay(h){
   if(mins===0) dv.textContent="On schedule";
   else if(mins<0) dv.textContent="~"+(-mins)+" min early";
   else{const H=Math.floor(mins/60),M=mins%60;
-    dv.textContent="~"+(H?H+"h ":"")+M+"m late · in "+shortName(LEG.stops[LEG.stops.length-1].name)+" ~"+clockAt(LEG.TOTAL).time;}
+    dv.textContent="~"+(H?H+"h ":"")+M+"m late · in "+LEG.stops[LEG.stops.length-1].short+" ~"+clockAt(LEG.TOTAL).time;}
   /* everything that prints a clock time or counts a meal has to follow the delay,
      not just the strip */
   wallBands(LEG);
@@ -521,7 +530,7 @@ function fillAnchor(){
   const sel=$("anchorStop");sel.innerHTML="";
   LEG.stops.forEach((s,i)=>{
     const o=document.createElement("option");o.value=i;
-    o.textContent=shortName(s.name)+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
+    o.textContent=s.short+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
 }
 
 /* ================= remembered state =================
@@ -647,7 +656,7 @@ function rebuild(){
   scrub.max=LEG.TOTAL.toFixed(2);
   if(+scrub.value>LEG.TOTAL) scrub.value=0;
   const a=LEG.stops[0], b=LEG.stops[LEG.stops.length-1];
-  $("legTitle").textContent=shortName(a.name)+" → "+shortName(b.name);
+  $("legTitle").textContent=a.short+" → "+b.short;
   const days=runDays(IT);
   $("runsHint").innerHTML = days.length>=7 ? "" :
     (runsOn(IT,depDate.value)
@@ -662,7 +671,7 @@ function rebuild(){
   if(window.__rebuildLive)window.__rebuildLive();
   updateTrain();
   writeURL();
-  document.title=shortName(a.name)+" → "+shortName(b.name)+" · Amtrak signal map";
+  document.title=a.short+" → "+b.short+" · Amtrak signal map";
 }
 (function scope(){
   const el=$("dataScope");
