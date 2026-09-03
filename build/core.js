@@ -72,6 +72,16 @@ const ZAB={"America/Los_Angeles":"PT","America/Denver":"MT","America/Chicago":"C
 /* ---------- geo helpers ---------- */
 function hav(a,b,c,d){const p=Math.PI/180;
   return 12742*Math.asin(Math.sqrt(Math.max(0,0.5-Math.cos((c-a)*p)/2+Math.cos(a*p)*Math.cos(c*p)*(1-Math.cos((d-b)*p))/2)));}
+/* Distance from a point to a track segment, not just to its endpoints: the
+   polyline is simplified hardest where the country is flattest, so vertices
+   alone can be tens of km from a feature the train runs straight past. */
+function distToSeg(plat,plng,alat,alng,blat,blng){
+  const k=Math.cos(plat*Math.PI/180);
+  const ax=(alng-plng)*k, ay=alat-plat, bx=(blng-plng)*k, by=blat-plat;
+  const dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy;
+  let t=L?-(ax*dx+ay*dy)/L:0; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(ax+dx*t,ay+dy*t)*111.32;
+}
 function bearing(a,b,c,d){const p=Math.PI/180,y=Math.sin((d-b)*p)*Math.cos(c*p),
   x=Math.cos(a*p)*Math.sin(c*p)-Math.sin(a*p)*Math.cos(c*p)*Math.cos((d-b)*p);
   return (Math.atan2(y,x)/p+360)%360;}
@@ -111,6 +121,20 @@ const SIGHTS=[
   d:"Coming off the foothills, the Great Plains and the Denver skyline open out below; the horseshoe curves show both sides."},
  {lat:40.81,lng:-91.11,r:12,dir:"BOTH",n:"Mississippi River at Burlington",
   d:"Cross the Mississippi on the long bridge at the Iowa–Illinois state line."},
+ {lat:37.90,lng:-81.05,r:28,dir:"BOTH",n:"New River Gorge",
+  d:"The line follows the New River through a deep Appalachian gorge for most of a morning, with no road on the far bank for long stretches."},
+ {lat:41.25,lng:-122.28,r:32,dir:"E",n:"Mount Shasta",
+  d:"A 14,179 ft volcano stands alone above the treeline as the track climbs the Sacramento River canyon toward Dunsmuir."},
+ {lat:35.35,lng:-120.64,r:16,dir:"BOTH",n:"Cuesta Grade",
+  d:"Horseshoe curves and tunnels lift the line out of San Luis Obispo; the train doubles back on itself, so both sides get the view."},
+ {lat:45.70,lng:-121.50,r:32,dir:"S",n:"Columbia River Gorge",
+  d:"The track runs the north bank of the Columbia beneath basalt cliffs, with waterfalls on the Oregon side across the water."},
+ {lat:47.95,lng:-122.31,r:26,dir:"W",n:"Puget Sound shoreline",
+  d:"North of Seattle the line runs at the water's edge below the bluffs, with the Olympics across the Sound."},
+ {lat:39.325,lng:-77.73,r:9,dir:"BOTH",n:"Harpers Ferry",
+  d:"The train crosses the Potomac on a bridge at the confluence with the Shenandoah, right through the old town."},
+ {lat:29.70,lng:-91.30,r:26,dir:"BOTH",n:"Atchafalaya Basin",
+  d:"Miles of elevated track across open swamp and cypress, the largest wetland in the country."},
  {lat:48.32,lng:-113.36,r:30,dir:"N",n:"Marias Pass & Glacier National Park",
   d:"The railroad crosses the Continental Divide at 5,213 ft along the southern edge of Glacier National Park."},
  {lat:47.75,lng:-120.95,r:12,dir:"TUNNEL",n:"Cascade Tunnel",
@@ -200,8 +224,12 @@ function buildLeg(){
   L.sights=[];
   SIGHTS.forEach(s=>{
     let bi=-1,bd=1e9;
-    for(let j=0;j<L.poly.length;j++){const d=hav(s.lat,s.lng,L.poly[j][0],L.poly[j][1]); if(d<bd){bd=d;bi=j;}}
-    if(bd>s.r) return;
+    for(let j=0;j<L.poly.length-1;j++){
+      const d=distToSeg(s.lat,s.lng,L.poly[j][0],L.poly[j][1],L.poly[j+1][0],L.poly[j+1][1]);
+      if(d<bd){bd=d;bi=j;}
+    }
+    if(L.poly.length===1){bd=hav(s.lat,s.lng,L.poly[0][0],L.poly[0][1]);bi=0;}
+    if(bi<0||bd>s.r) return;
     const j2=Math.min(L.poly.length-1,bi+1), j1=Math.max(0,bi-1);
     const head=bearing(L.poly[j1][0],L.poly[j1][1],L.poly[j2][0],L.poly[j2][1]);
     let side="Both";
