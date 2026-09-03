@@ -273,15 +273,47 @@ function computeTNow(){
     return (Date.now()-LEG.dep.getTime())/3600000-DELAY; }
   return +scrub.value;
 }
+/* On a multi-day train the run you are sitting on left one or two days ago, so
+   "live now" on today's date reports a departure still to come. Offer the run
+   that is actually out there rather than guessing, since someone waiting at the
+   station for tomorrow's train wants today's date left alone. */
+const shiftDate=(str,days)=>{const p=str.split("-").map(Number);
+  return new Date(Date.UTC(p[0],p[1]-1,p[2]+days)).toISOString().slice(0,10);};
+function runAboardNow(){
+  if(!depDate.value||!LEG) return null;
+  const depHM=IT.dep.split(":").map(Number), depMin=depHM[0]*60+depHM[1]+IT.s[O][1];
+  const oTz=TZ[ST[IT.s[O][0]][3]], now=Date.now();
+  for(let d=1;d<=Math.ceil(LEG.TOTAL/24);d++){
+    const day=shiftDate(depDate.value,-d);
+    const inst=originInstant(day,depMin,oTz).inst.getTime();
+    if(now>=inst&&now<=inst+LEG.TOTAL*3600000)
+      return {date:day,label:new Intl.DateTimeFormat("en-US",{weekday:"long",timeZone:oTz}).format(new Date(inst))};
+  }
+  return null;
+}
+function offerRunAboard(){
+  const host=$("aboardHint");
+  if(!host) return;
+  host.innerHTML="";
+  if(!liveOn.checked) return;
+  const r=runAboardNow();
+  if(!r) return;
+  const b=document.createElement("button");
+  b.type="button"; b.className="aboard";
+  b.textContent="the run from "+r.label+" is out there now";
+  b.addEventListener("click",()=>{depDate.value=r.date;rebuild();});
+  host.appendChild(b);
+}
 function updateTrain(){
   const t=computeTNow();
   if(window.__onTrain)window.__onTrain(t);
   updateAgenda(t);
   moveNowLine(t);
   if(!trainG) return;
-  if(t===null){trainG.style.display="none";liveStatus.textContent="set a date";return;}
+  if(t===null){trainG.style.display="none";liveStatus.textContent="set a date";offerRunAboard();return;}
   if(t<-0.001){trainG.style.display="none";liveStatus.textContent="departs in "+fmtDur(-t);
-    if(scrubVal)scrubVal.textContent="";return;}
+    if(scrubVal)scrubVal.textContent=""; offerRunAboard(); return;}
+  if($("aboardHint")) $("aboardHint").innerHTML="";
   trainG.style.display="";
   const tc=Math.min(t,LEG.TOTAL), p=posAt(tc), x=px(p.lng), y=py(p.lat);
   trHalo.setAttribute("cx",x);trHalo.setAttribute("cy",y);
