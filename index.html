@@ -474,20 +474,23 @@ function ymdIn(d,tz){
     .formatToParts(d).forEach(x=>p[x.type]=x.value);
   return p.year+"-"+p.month+"-"+p.day;
 }
-/* The date the user picks is the date they board, local to the origin station. */
+/* The date the user picks is the date they board, local to the origin station.
+   Returns the agency calendar date the run starts on, so every other stop can be
+   resolved from its own wall-clock time rather than by adding raw minutes. */
 function originInstant(dateStr,originMin,oTz){
   if(!dateStr) dateStr="2026-01-01";
-  let inst=agencyInstant(dateStr,originMin);
+  let base=dateStr;
+  let inst=agencyInstant(base,originMin);
   const got=ymdIn(inst,oTz);
   if(got!==dateStr){
     const diff=Math.round((Date.parse(got+"T12:00:00Z")-Date.parse(dateStr+"T12:00:00Z"))/86400000);
     if(diff){
       const d=dateStr.split("-").map(Number);
-      const shifted=new Date(Date.UTC(d[0],d[1]-1,d[2]-diff));
-      inst=agencyInstant(shifted.toISOString().slice(0,10),originMin);
+      base=new Date(Date.UTC(d[0],d[1]-1,d[2]-diff)).toISOString().slice(0,10);
+      inst=agencyInstant(base,originMin);
     }
   }
-  return inst;
+  return {inst:inst,date:base};
 }
 const ZAB={"America/Los_Angeles":"PT","America/Denver":"MT","America/Chicago":"CT","America/New_York":"ET"};
 
@@ -586,15 +589,18 @@ function buildLeg(){
   const oTz=TZ[ST[stops[o][0]][3]];
   /* GTFS stop_times are in the agency's zone (Eastern for Amtrak), not the stop's.
      Elapsed time is therefore the raw difference; only the displayed clock changes zone. */
-  const depHM=IT.dep.split(":").map(Number);
-  const originMin=depHM[0]*60+depHM[1]+stops[o][1];
-  const inst=originInstant($("depDate").value,originMin,oTz);
+  const depHM=IT.dep.split(":").map(Number), depMin=depHM[0]*60+depHM[1];
+  const start=originInstant($("depDate").value,depMin+stops[o][1],oTz);
+  const inst=start.inst;
+  /* Each stop is resolved from its own wall-clock time on the run's start date.
+     Adding raw minutes instead would be an hour out either way across a
+     daylight-saving change, which every long-distance train crosses twice a year. */
+  const at=i=>agencyInstant(start.date,depMin+stops[i][1]);
   const L={stops:[],poly:[],polyT:[],cov:[],dep:inst,TOTAL:0};
   for(let i=o;i<=e;i++){
-    const c=stops[i][0], s=ST[c];
-    const t=(stops[i][1]-stops[o][1])/60;
-    L.stops.push({code:c,name:stationName(c),lat:s[1],lng:s[2],tz:TZ[s[3]],t:t,
-                  inst:new Date(inst.getTime()+t*3600000)});
+    const c=stops[i][0], s=ST[c], gi=at(i);
+    L.stops.push({code:c,name:stationName(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
+                  t:(gi-inst)/3600000, inst:gi});
   }
   L.TOTAL=L.stops[L.stops.length-1].t;
   /* polyline slice, with elapsed time distributed along track distance */
