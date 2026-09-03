@@ -332,6 +332,9 @@ const rideMins=(it,a,b)=>it.s[b][1]-(it.s[b][2]||0)-it.s[a][1];
 /* "Denver 8:46a" is the wrong half of the answer at a stop the train sits at
    for an hour, so say both times and how long the wait is. */
 const dwellText=m=>m>=90?fmtDur(m/60):(m+" min");   /* 239 min is four hours; say so */
+/* Telling someone to watch for Mount Shasta at five in the morning is only
+   useful if you also say the sun is not up yet. */
+const darkAt=t=>!!(LEG&&LEG.night&&LEG.night.some(n=>t>=n.a&&t<n.b));
 function stopWhen(s){
   return clockAt(s.t).time+(s.dwell?("–"+clockAt(s.td).time+", "+dwellText(s.dwell)+" stop"):"");
 }

@@ -83,11 +83,15 @@ function agTipList(t){
         : ('<b>'+CN+' is usable</b> and stays that way to '+stopName(LEG.stops.length-1)+'.'));
     }
   }
-  if(sn) add("◉",'<b>'+sn.n+', right now.</b> '+lookText(sn)+'.',true);
+  if(sn) add("◉",'<b>'+sn.n+', right now.</b> '+lookText(sn)+(darkAt(sn.t)?', though it is dark out.':'.'),true);
   else if(ns&&ns.t-t<=Math.max(0.6,LEG.TOTAL/60))
-    add("◉",'<b>Head up to the Sightseer Lounge.</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.',ns.t-t<=0.4);
+    add("◉",darkAt(ns.t)
+      ? ('<b>'+ns.n+' in ~'+fmtDur(ns.t-t)+'</b>, but it will be dark. Nothing to see unless there is a moon.')
+      : ('<b>Head up to the Sightseer Lounge.</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.'),ns.t-t<=0.4);
   if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'. Sleeper fares include it; coach can join if seats are free.');
-  else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
+  else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+
+    (nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.'
+                       :' Sleeper fares include it; coach can join if seats are free.'));
   else if(nm&&nm.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
   if(st&&st.t-t<=0.6&&st.dwell>=10)
     add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+dwellText(st.dwell)+' on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
@@ -163,7 +167,9 @@ function updateAgenda(t){
       {ic:"⤓",html:'<b>Download everything now.</b> '+(worst>0.5?('This leg has about '+fmtDur(worst)+' with no service at all on '+CARRIER_NAME[carrier]+'. '):'')+'Offline maps, playlists, a few episodes, whatever you plan to read.'},
       {ic:"▨",html:LEG.dining?('<b>'+(LEG.meals[0]?LEG.meals[0].name:"The first meal")+' is your first service.</b> In a sleeper, book dinner with your car attendant once you board.')
                             :'<b>Café car only</b> on a run this length. Bring your own food if you want more than snacks.'},
-      {ic:"◉",html:LEG.sights.length?('<b>'+LEG.sights.length+' scenery highlight'+(LEG.sights.length>1?"s":"")+'</b> on this leg, starting with '+LEG.sights[0].n+'. The Sightseer Lounge sees both sides.')
+      {ic:"◉",html:LEG.sights.length?('<b>'+LEG.sights.length+' scenery highlight'+(LEG.sights.length>1?"s":"")+'</b> on this leg'+
+          (LEG.sights.every(x=>darkAt(x.t))?', though all of them fall in the dark. '
+           :(', starting with '+(LEG.sights.filter(x=>!darkAt(x.t))[0]||LEG.sights[0]).n+'. '))+'The Sightseer Lounge sees both sides.')
                                    :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]
       .concat(longStopTip()));
     return;
@@ -199,8 +205,8 @@ function updateAgenda(t){
     :(mn?(mn.name+' being served · <em>last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'</em>')
        :(nm?(nm.name+' opens ~'+clockAt(nm.a).time+' · <em>in '+fmtDur(nm.a-t)+'</em>'):'Closed for the rest of this leg'))]);
   const sn=sightNow(t),ns=nextSight(t);
-  rows.push(["Window",sn?('<b>'+sn.n+'</b> · <em>'+lookText(sn)+'</em>')
-    :(ns?(ns.n+' ~'+clockAt(ns.t).time+' · <em>in '+fmtDur(ns.t-t)+'</em>'):'No marked highlights left on this leg')]);
+  rows.push(["Window",sn?('<b>'+sn.n+'</b> · <em>'+lookText(sn)+(darkAt(sn.t)?', though it is dark out':'')+'</em>')
+    :(ns?(ns.n+' ~'+clockAt(ns.t).time+' · <em>in '+fmtDur(ns.t-t)+(darkAt(ns.t)?', and dark then':'')+'</em>'):'No marked highlights left on this leg')]);
   const host=$("agRows");
   rows.forEach(r=>{const d=document.createElement("div");d.className="ag-row";
     d.innerHTML='<span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span>';host.appendChild(d);});

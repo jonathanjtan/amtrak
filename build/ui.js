@@ -201,7 +201,8 @@ function drawSights(){
     }
     const d=document.createElement("div");d.className="sight";
     d.innerHTML='<div class="badge">'+compass(s.dir)+'<span class="side">'+(s.side==="Tunnel"?"—":s.side.toUpperCase())+'</span></div>'+
-      '<div class="body"><h4>'+s.n+'</h4><div class="when">~'+c.time+' '+c.z+'</div>'+
+      '<div class="body"><h4>'+s.n+'</h4><div class="when">~'+c.time+' '+c.z+
+      (darkAt(s.t)?' · <b>dark then</b>':'')+'</div>'+
       '<div class="look">'+lookText(s)+'</div><p>'+s.d+'</p></div>';
     grid.appendChild(d);
   });
