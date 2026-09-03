@@ -230,15 +230,17 @@
 
   /* route picker */
   .picker{display:grid;grid-template-columns:1fr auto 1fr minmax(190px,1.3fr) auto;gap:10px;align-items:end;margin:0 0 8px;}
+  .swap-txt{display:none;}
   @media (max-width:820px){
     .picker{grid-template-columns:1fr 1fr;}
     .picker>.pk:nth-child(1){order:1;}
     .picker>.pk:nth-child(3){order:2;}
-    .picker>.pk:nth-child(4){grid-column:span 2;order:3;}
-    .picker>.pk:nth-child(5){order:4;}
-    .pk-swap{order:5;}
-    .pk-swap>span{display:none;}
-    .pk-swap button{width:100%;}
+    .pk-swap{order:3;grid-column:span 2;}
+    .picker>.pk:nth-child(4){grid-column:span 2;order:4;}
+    .picker>.pk:nth-child(5){grid-column:span 2;order:5;}
+    .pk-swap>span:first-child{display:none;}
+    .pk-swap button{width:100%;padding:8px 12px;}
+    .swap-txt{display:inline;}
   }
   .pk{display:flex;flex-direction:column;gap:5px;min-width:0;}
   .pk>span{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.16em;
@@ -271,7 +273,7 @@
 
   <div class="picker">
     <label class="pk"><span>From</span><input id="origIn" list="allStops" autocomplete="off" placeholder="any station"></label>
-    <label class="pk pk-swap"><span>&nbsp;</span><button id="swapBtn" class="iconbtn" type="button" title="Reverse direction" aria-label="Reverse direction">⇄</button></label>
+    <label class="pk pk-swap"><span>&nbsp;</span><button id="swapBtn" class="iconbtn" type="button" title="Reverse direction" aria-label="Reverse direction">⇄<span class="swap-txt"> Reverse</span></button></label>
     <label class="pk"><span>To</span><input id="destIn" list="allStops" autocomplete="off" placeholder="any station"></label>
     <label class="pk"><span>Service</span><select id="routeSel"></select></label>
     <label class="pk"><span>Date</span><input type="date" id="depDate"></label>
@@ -380,7 +382,7 @@
   <div id="diningWrap"></div>
 
   <footer>
-    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>; times are the timetable, not live running. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas.
+    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>; times are the timetable for the week of 3 September 2026, not live running, and Amtrak changes schedules. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas.
   </footer>
 </div>
 
