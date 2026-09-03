@@ -87,7 +87,8 @@ function agTipList(t){
   else if(ns&&ns.t-t<=Math.max(0.6,LEG.TOTAL/60))
     add("◉",darkAt(ns.t)
       ? ('<b>'+ns.n+' in ~'+fmtDur(ns.t-t)+'</b>, but it will be dark. Nothing to see unless there is a moon.')
-      : ('<b>Head up to the Sightseer Lounge.</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.'),ns.t-t<=0.4);
+      : ('<b>'+(hasSightseer()?'Head up to the Sightseer Lounge.':'Find a window on the right side of the train.')+
+         '</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.'),ns.t-t<=0.4);
   if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'. Sleeper fares include it; coach can join if seats are free.');
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+
     (nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.'
@@ -169,8 +170,9 @@ function updateAgenda(t){
                             :'<b>Café car only</b> on a run this length. Bring your own food if you want more than snacks.'},
       {ic:"◉",html:LEG.sights.length?('<b>'+LEG.sights.length+' scenery highlight'+(LEG.sights.length>1?"s":"")+'</b> on this leg'+
           (LEG.sights.every(x=>darkAt(x.t))?', though all of them fall in the dark. '
-           :(', starting with '+(LEG.sights.filter(x=>!darkAt(x.t))[0]||LEG.sights[0]).n+'. '))+'The Sightseer Lounge sees both sides.')
-                                   :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]
+           :(', starting with '+(LEG.sights.filter(x=>!darkAt(x.t))[0]||LEG.sights[0]).n+'. '))+
+          (hasSightseer()?'The Sightseer Lounge sees both sides.':'This train has no Sightseer Lounge, so pick your side of the coach.'))
+                                   :'<b>Grab a window seat.</b> '+(hasSightseer()?'The Sightseer Lounge sees both sides.':'This train is single-level, so pick your side of the coach.')}]
       .concat(longStopTip()));
     return;
   }

@@ -6,6 +6,22 @@ const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAt
 const $=id=>document.getElementById(id);
 const TZ=DATA.tz, ST=DATA.stops, ITS=DATA.its;
 const CARRIER_NAME={verizon:"Verizon",att:"AT&T",tmobile:"T-Mobile"};
+/* Nothing in the feed says what equipment a train runs, and length is a poor
+   guess: one Northeast Regional is scheduled for 17 hours and still has only a
+   café counter. So the two things the page asserts about the inside of a train
+   are named, not inferred.
+   A dining car goes with sleeping cars, on the long-distance network.
+   The glass-roofed Sightseer Lounge is a Superliner car, so it runs west and
+   south of Chicago and not on the eastern routes, which are single-level
+   because of the tunnels into New York and Washington. */
+const DINING_ROUTES=new Set(["California Zephyr","Coast Starlight","Empire Builder",
+  "Southwest Chief","Sunset Limited","Texas Eagle","City of New Orleans",
+  "Lake Shore Limited","Crescent","Silver Meteor","Silver Star","Cardinal",
+  "Floridian","Capitol Limited","Auto Train"]);
+const SIGHTSEER_ROUTES=new Set(["California Zephyr","Coast Starlight","Empire Builder",
+  "Southwest Chief","Sunset Limited","Texas Eagle","City of New Orleans",
+  "Capitol Limited","Auto Train"]);
+const hasSightseer=()=>!!(IT&&SIGHTSEER_ROUTES.has(IT.n));
 /* Read the coverage colours from the stylesheet rather than keeping a second
    copy here. They were edited in one place and not the other, which left the
    legend swatches and the strip drawing two different greens. */
@@ -375,7 +391,8 @@ function hhmm(h){
    at earlier points on its route. Recomputed whenever the delay changes. */
 function wallBands(L){
   L.night=[]; L.meals=[];
-  L.dining=L.TOTAL>=10;
+  /* meals happen in windows only where there is a dining car to serve them */
+  L.dining=L.TOTAL>=10&&DINING_ROUTES.has(IT.n);
   const STEP=Math.max(2/60,L.TOTAL/900);
 
   let curN=null,curM=null;

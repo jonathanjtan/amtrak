@@ -224,8 +224,9 @@ function mealsByDay(){
 function drawDining(){
   const wrap=$("diningWrap");
   if(!LEG.dining){
-    wrap.innerHTML='<div class="sec-label">Onboard</div><p class="sight-note">This leg runs '+fmtDur(LEG.TOTAL)+
-      ', so expect a <b>café car</b> rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard. '+
+    wrap.innerHTML='<div class="sec-label">Onboard</div><p class="sight-note">The '+IT.n+' runs with a <b>café car</b> '+
+      'rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard. '+
+      (LEG.TOTAL>=8?'It is open through the day rather than in meal sittings, so there is no window to plan around, but on a run this length bring something of your own. ':'')+
       'Amtrak carries free Wi-Fi on most corridor trains, but it runs over the same cellular networks mapped above, '+
       'so it thins out and drops in the same places. Treat the colors here as the ceiling for onboard Wi-Fi too.</p>';
     return;
@@ -233,9 +234,11 @@ function drawDining(){
   const names=LEG.meals.map(m=>m.name);
   wrap.innerHTML='<div class="sec-label">Dining &amp; the observation car</div>'+
    '<div class="onboard">'+
-   '<div class="ob obs"><h4>Sightseer Lounge <span class="tag">open to all</span></h4><p>An upper deck walled in floor-to-ceiling windows, open to every passenger, with the Café on the lower level. It fills through the best scenery, so claim a spot early.</p></div>'+
+   (hasSightseer()
+     ? '<div class="ob obs"><h4>Sightseer Lounge <span class="tag">open to all</span></h4><p>An upper deck walled in floor-to-ceiling windows, open to every passenger, with the Café on the lower level. It fills through the best scenery, so claim a spot early.</p></div>'
+     : '<div class="ob obs"><h4>Lounge car <span class="tag">open to all</span></h4><p>This train is single-level, so there is no glass-roofed Sightseer Lounge. The lounge is a café counter with table seating, open to every passenger, and a better view than a coach seat.</p></div>')+
    '<div class="ob dine"><h4>Dining car <span class="tag">sleeper included</span></h4><p>Chef-prepared breakfast and lunch and a three-course dinner at communal tables. Complimentary for sleeping-car passengers; dinner is by reservation through your car attendant. Coach can join first-come if seats are free.</p></div>'+
-   '<div class="ob cafe"><h4>Café car <span class="tag">open to all</span></h4><p>Lower level of the lounge. Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food.</p></div>'+
+   '<div class="ob cafe"><h4>Café car <span class="tag">open to all</span></h4><p>'+(hasSightseer()?'Lower level of the lounge. ':'')+'Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food.</p></div>'+
    '</div><div class="meal-times">'+
    MEALS.map(m=>{
      const a=hhmm(m[0]), b=hhmm(m[1]), lc=hhmm(m[1]-LAST_CALL);

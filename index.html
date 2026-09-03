@@ -514,6 +514,22 @@ const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAt
 const $=id=>document.getElementById(id);
 const TZ=DATA.tz, ST=DATA.stops, ITS=DATA.its;
 const CARRIER_NAME={verizon:"Verizon",att:"AT&T",tmobile:"T-Mobile"};
+/* Nothing in the feed says what equipment a train runs, and length is a poor
+   guess: one Northeast Regional is scheduled for 17 hours and still has only a
+   café counter. So the two things the page asserts about the inside of a train
+   are named, not inferred.
+   A dining car goes with sleeping cars, on the long-distance network.
+   The glass-roofed Sightseer Lounge is a Superliner car, so it runs west and
+   south of Chicago and not on the eastern routes, which are single-level
+   because of the tunnels into New York and Washington. */
+const DINING_ROUTES=new Set(["California Zephyr","Coast Starlight","Empire Builder",
+  "Southwest Chief","Sunset Limited","Texas Eagle","City of New Orleans",
+  "Lake Shore Limited","Crescent","Silver Meteor","Silver Star","Cardinal",
+  "Floridian","Capitol Limited","Auto Train"]);
+const SIGHTSEER_ROUTES=new Set(["California Zephyr","Coast Starlight","Empire Builder",
+  "Southwest Chief","Sunset Limited","Texas Eagle","City of New Orleans",
+  "Capitol Limited","Auto Train"]);
+const hasSightseer=()=>!!(IT&&SIGHTSEER_ROUTES.has(IT.n));
 /* Read the coverage colours from the stylesheet rather than keeping a second
    copy here. They were edited in one place and not the other, which left the
    legend swatches and the strip drawing two different greens. */
@@ -883,7 +899,8 @@ function hhmm(h){
    at earlier points on its route. Recomputed whenever the delay changes. */
 function wallBands(L){
   L.night=[]; L.meals=[];
-  L.dining=L.TOTAL>=10;
+  /* meals happen in windows only where there is a dining car to serve them */
+  L.dining=L.TOTAL>=10&&DINING_ROUTES.has(IT.n);
   const STEP=Math.max(2/60,L.TOTAL/900);
 
   let curN=null,curM=null;
@@ -1378,8 +1395,9 @@ function mealsByDay(){
 function drawDining(){
   const wrap=$("diningWrap");
   if(!LEG.dining){
-    wrap.innerHTML='<div class="sec-label">Onboard</div><p class="sight-note">This leg runs '+fmtDur(LEG.TOTAL)+
-      ', so expect a <b>café car</b> rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard. '+
+    wrap.innerHTML='<div class="sec-label">Onboard</div><p class="sight-note">The '+IT.n+' runs with a <b>café car</b> '+
+      'rather than a dining car: snacks, coffee and drinks for sale, and you can bring your own food aboard. '+
+      (LEG.TOTAL>=8?'It is open through the day rather than in meal sittings, so there is no window to plan around, but on a run this length bring something of your own. ':'')+
       'Amtrak carries free Wi-Fi on most corridor trains, but it runs over the same cellular networks mapped above, '+
       'so it thins out and drops in the same places. Treat the colors here as the ceiling for onboard Wi-Fi too.</p>';
     return;
@@ -1387,9 +1405,11 @@ function drawDining(){
   const names=LEG.meals.map(m=>m.name);
   wrap.innerHTML='<div class="sec-label">Dining &amp; the observation car</div>'+
    '<div class="onboard">'+
-   '<div class="ob obs"><h4>Sightseer Lounge <span class="tag">open to all</span></h4><p>An upper deck walled in floor-to-ceiling windows, open to every passenger, with the Café on the lower level. It fills through the best scenery, so claim a spot early.</p></div>'+
+   (hasSightseer()
+     ? '<div class="ob obs"><h4>Sightseer Lounge <span class="tag">open to all</span></h4><p>An upper deck walled in floor-to-ceiling windows, open to every passenger, with the Café on the lower level. It fills through the best scenery, so claim a spot early.</p></div>'
+     : '<div class="ob obs"><h4>Lounge car <span class="tag">open to all</span></h4><p>This train is single-level, so there is no glass-roofed Sightseer Lounge. The lounge is a café counter with table seating, open to every passenger, and a better view than a coach seat.</p></div>')+
    '<div class="ob dine"><h4>Dining car <span class="tag">sleeper included</span></h4><p>Chef-prepared breakfast and lunch and a three-course dinner at communal tables. Complimentary for sleeping-car passengers; dinner is by reservation through your car attendant. Coach can join first-come if seats are free.</p></div>'+
-   '<div class="ob cafe"><h4>Café car <span class="tag">open to all</span></h4><p>Lower level of the lounge. Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food.</p></div>'+
+   '<div class="ob cafe"><h4>Café car <span class="tag">open to all</span></h4><p>'+(hasSightseer()?'Lower level of the lounge. ':'')+'Hot and cold snacks, coffee and drinks for sale through the day, and the only hot-meal option in coach. You can also bring your own food.</p></div>'+
    '</div><div class="meal-times">'+
    MEALS.map(m=>{
      const a=hhmm(m[0]), b=hhmm(m[1]), lc=hhmm(m[1]-LAST_CALL);
@@ -1492,7 +1512,8 @@ function agTipList(t){
   else if(ns&&ns.t-t<=Math.max(0.6,LEG.TOTAL/60))
     add("◉",darkAt(ns.t)
       ? ('<b>'+ns.n+' in ~'+fmtDur(ns.t-t)+'</b>, but it will be dark. Nothing to see unless there is a moon.')
-      : ('<b>Head up to the Sightseer Lounge.</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.'),ns.t-t<=0.4);
+      : ('<b>'+(hasSightseer()?'Head up to the Sightseer Lounge.':'Find a window on the right side of the train.')+
+         '</b> '+ns.n+' in ~'+fmtDur(ns.t-t)+'. '+lookText(ns)+'.'),ns.t-t<=0.4);
   if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'. Sleeper fares include it; coach can join if seats are free.');
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+
     (nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.'
@@ -1574,8 +1595,9 @@ function updateAgenda(t){
                             :'<b>Café car only</b> on a run this length. Bring your own food if you want more than snacks.'},
       {ic:"◉",html:LEG.sights.length?('<b>'+LEG.sights.length+' scenery highlight'+(LEG.sights.length>1?"s":"")+'</b> on this leg'+
           (LEG.sights.every(x=>darkAt(x.t))?', though all of them fall in the dark. '
-           :(', starting with '+(LEG.sights.filter(x=>!darkAt(x.t))[0]||LEG.sights[0]).n+'. '))+'The Sightseer Lounge sees both sides.')
-                                   :'<b>Grab a window seat.</b> The Sightseer Lounge, where the train has one, sees both sides.'}]
+           :(', starting with '+(LEG.sights.filter(x=>!darkAt(x.t))[0]||LEG.sights[0]).n+'. '))+
+          (hasSightseer()?'The Sightseer Lounge sees both sides.':'This train has no Sightseer Lounge, so pick your side of the coach.'))
+                                   :'<b>Grab a window seat.</b> '+(hasSightseer()?'The Sightseer Lounge sees both sides.':'This train is single-level, so pick your side of the coach.')}]
       .concat(longStopTip()));
     return;
   }
