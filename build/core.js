@@ -320,6 +320,12 @@ function buildLeg(){
    off at an arrival, so the wait at the stop where you alight belongs to the
    train's day, not to your journey. */
 const rideMins=(it,a,b)=>it.s[b][1]-(it.s[b][2]||0)-it.s[a][1];
+/* "Denver 8:46a" is the wrong half of the answer at a stop the train sits at
+   for an hour, so say both times and how long the wait is. */
+const dwellText=m=>m>=90?fmtDur(m/60):(m+" min");   /* 239 min is four hours; say so */
+function stopWhen(s){
+  return clockAt(s.t).time+(s.dwell?("–"+clockAt(s.td).time+", "+dwellText(s.dwell)+" stop"):"");
+}
 function legHours(itIdx,o,e,car){
   const it=ITS[itIdx], cv=it.cv[car||carrier], out={good:0,spotty:0,dead:0};
   if(!cv) return out;

@@ -15,7 +15,7 @@ function agEvents(){
   LEG.stops.forEach((s,i)=>{
     if(i===0) return;
     ev.push({t:s.t,pri:2,title:s.short,
-      sub:s.dwell>=8?("station stop · about "+s.dwell+" min on the platform"):"station stop"});
+      sub:s.dwell>=8?("station stop · about "+dwellText(s.dwell)+" on the platform"):"station stop"});
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
   LEG.meals.forEach(m=>ev.push({t:m.a,pri:2,title:m.name+" opens",
@@ -80,7 +80,7 @@ function agTipList(t){
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
   else if(nm&&nm.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
   if(st&&st.t-t<=0.6&&st.dwell>=10)
-    add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+st.dwell+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
+    add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+dwellText(st.dwell)+' on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
   /* on a leg that hands you to another train, the change is the thing to know */
   const cx=(typeof journey!=="undefined"&&journey)?journeyLegContext():null;
   if(cx&&LEG.TOTAL-t<=Math.max(2,LEG.TOTAL/8)){
@@ -117,7 +117,7 @@ function longStopTip(){
     .filter(x=>x.dw>=15).sort((a,b)=>b.dw-a.dw).slice(0,2).sort((a,b)=>a.s.t-b.s.t);
   if(!big.length) return [];
   return [{ic:"▮",html:'<b>'+(big.length>1?'Long stops':'One long stop')+':</b> '+
-    big.map(x=>x.s.short+' '+x.dw+' min at '+clockAt(x.s.t).time).join(", ")+
+    big.map(x=>x.s.short+' '+dwellText(x.dw)+' at '+clockAt(x.s.t).time).join(", ")+
     '. Long enough to get off, stretch, and send whatever has been waiting.'}];
 }
 function updateAgenda(t){

@@ -550,7 +550,7 @@ function fillAnchor(){
   const sel=$("anchorStop");sel.innerHTML="";
   LEG.stops.forEach((s,i)=>{
     const o=document.createElement("option");o.value=i;
-    o.textContent=s.short+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
+    o.textContent=s.short+" (sched "+stopWhen(s)+")";sel.appendChild(o);});
 }
 
 /* ================= remembered state =================
@@ -784,7 +784,7 @@ function openDefault(){
         const major=(i===0||i===LEG.stops.length-1);
         L.circleMarker([s.lat,s.lng],{radius:major?6:4,color:"#fff",weight:major?2:1.4,
           fillColor:major?"#EAE7DE":"#9aa6b2",fillOpacity:1}).addTo(routeLayer)
-          .bindPopup(s.name+"<br>"+clockAt(s.t).full);
+          .bindPopup(s.name+"<br>"+clockAt(s.t).full+(s.dwell?(" – "+clockAt(s.td).time+"<br>"+s.dwell+" min on the platform"):""));
       });
       LEG.sights.forEach(s=>{
         L.circleMarker([s.lat,s.lng],{radius:5,color:"#1fbccd",weight:2,fillColor:"#1fbccd",fillOpacity:.55})

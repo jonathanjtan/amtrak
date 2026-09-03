@@ -823,6 +823,12 @@ function buildLeg(){
    off at an arrival, so the wait at the stop where you alight belongs to the
    train's day, not to your journey. */
 const rideMins=(it,a,b)=>it.s[b][1]-(it.s[b][2]||0)-it.s[a][1];
+/* "Denver 8:46a" is the wrong half of the answer at a stop the train sits at
+   for an hour, so say both times and how long the wait is. */
+const dwellText=m=>m>=90?fmtDur(m/60):(m+" min");   /* 239 min is four hours; say so */
+function stopWhen(s){
+  return clockAt(s.t).time+(s.dwell?("–"+clockAt(s.td).time+", "+dwellText(s.dwell)+" stop"):"");
+}
 function legHours(itIdx,o,e,car){
   const it=ITS[itIdx], cv=it.cv[car||carrier], out={good:0,spotty:0,dead:0};
   if(!cv) return out;
@@ -1054,7 +1060,7 @@ function drawMap(){
     /* a wide invisible target so a 2px dot is still clickable, and so asking
        "what is the signal like at Denver?" is one click */
     const hit=el("circle",{cx:x,cy:y,r:9,class:"st-hit"});
-    hit.appendChild(el("title",{})).textContent=s.name;
+    hit.appendChild(el("title",{})).textContent=s.name+" · "+stopWhen(s);
     hit.addEventListener("click",ev=>{ev.stopPropagation();
       if(typeof seekTo==="function") seekTo(s.t);});
     vp.appendChild(hit); regDot(hit,9);
@@ -1402,7 +1408,7 @@ function agEvents(){
   LEG.stops.forEach((s,i)=>{
     if(i===0) return;
     ev.push({t:s.t,pri:2,title:s.short,
-      sub:s.dwell>=8?("station stop · about "+s.dwell+" min on the platform"):"station stop"});
+      sub:s.dwell>=8?("station stop · about "+dwellText(s.dwell)+" on the platform"):"station stop"});
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
   LEG.meals.forEach(m=>ev.push({t:m.a,pri:2,title:m.name+" opens",
@@ -1467,7 +1473,7 @@ function agTipList(t){
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
   else if(nm&&nm.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
   if(st&&st.t-t<=0.6&&st.dwell>=10)
-    add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+st.dwell+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
+    add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+dwellText(st.dwell)+' on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
   /* on a leg that hands you to another train, the change is the thing to know */
   const cx=(typeof journey!=="undefined"&&journey)?journeyLegContext():null;
   if(cx&&LEG.TOTAL-t<=Math.max(2,LEG.TOTAL/8)){
@@ -1504,7 +1510,7 @@ function longStopTip(){
     .filter(x=>x.dw>=15).sort((a,b)=>b.dw-a.dw).slice(0,2).sort((a,b)=>a.s.t-b.s.t);
   if(!big.length) return [];
   return [{ic:"▮",html:'<b>'+(big.length>1?'Long stops':'One long stop')+':</b> '+
-    big.map(x=>x.s.short+' '+x.dw+' min at '+clockAt(x.s.t).time).join(", ")+
+    big.map(x=>x.s.short+' '+dwellText(x.dw)+' at '+clockAt(x.s.t).time).join(", ")+
     '. Long enough to get off, stretch, and send whatever has been waiting.'}];
 }
 function updateAgenda(t){
@@ -2140,7 +2146,7 @@ function fillAnchor(){
   const sel=$("anchorStop");sel.innerHTML="";
   LEG.stops.forEach((s,i)=>{
     const o=document.createElement("option");o.value=i;
-    o.textContent=s.short+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
+    o.textContent=s.short+" (sched "+stopWhen(s)+")";sel.appendChild(o);});
 }
 
 /* ================= remembered state =================
@@ -2374,7 +2380,7 @@ function openDefault(){
         const major=(i===0||i===LEG.stops.length-1);
         L.circleMarker([s.lat,s.lng],{radius:major?6:4,color:"#fff",weight:major?2:1.4,
           fillColor:major?"#EAE7DE":"#9aa6b2",fillOpacity:1}).addTo(routeLayer)
-          .bindPopup(s.name+"<br>"+clockAt(s.t).full);
+          .bindPopup(s.name+"<br>"+clockAt(s.t).full+(s.dwell?(" – "+clockAt(s.td).time+"<br>"+s.dwell+" min on the platform"):""));
       });
       LEG.sights.forEach(s=>{
         L.circleMarker([s.lat,s.lng],{radius:5,color:"#1fbccd",weight:2,fillColor:"#1fbccd",fillOpacity:.55})

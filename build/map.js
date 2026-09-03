@@ -135,7 +135,7 @@ function drawMap(){
     /* a wide invisible target so a 2px dot is still clickable, and so asking
        "what is the signal like at Denver?" is one click */
     const hit=el("circle",{cx:x,cy:y,r:9,class:"st-hit"});
-    hit.appendChild(el("title",{})).textContent=s.name;
+    hit.appendChild(el("title",{})).textContent=s.name+" · "+stopWhen(s);
     hit.addEventListener("click",ev=>{ev.stopPropagation();
       if(typeof seekTo==="function") seekTo(s.t);});
     vp.appendChild(hit); regDot(hit,9);
