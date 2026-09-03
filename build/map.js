@@ -97,7 +97,10 @@ function drawMap(){
       if(typeof seekTo==="function") seekTo(s.t);});
     vp.appendChild(gg); regGroup(gg,x,y,1.05,1);
     const lb=el("text",{x:x,y:y-9.5,class:"scenic-lbl","text-anchor":"middle"});
-    lb.textContent=s.n.replace(/ &.*/,"").replace(/ at .*/,"").replace(/ descent.*/,"");
+    /* map labels get the feature, not the sentence: the pin already says where */
+    lb.textContent=s.n.replace(/ &.*/,"").replace(/ at .*/,"").replace(/ descent.*/,"")
+      .replace(/ to .*/,"").replace(/ (coast|bluffs|trestle|shoreline)$/,"")
+      .replace(/ High Bridge$/," Bridge");
     vp.appendChild(lb); regLabel(lb,9,2.4);
   });
   /* stations */

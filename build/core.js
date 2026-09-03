@@ -197,6 +197,19 @@ const SIGHTS=[
   d:"A 7,588 ft crossing of the Colorado–New Mexico line, the steepest main-line grade Amtrak runs."},
  {lat:44.50,lng:-73.38,r:25,dir:"W",n:"Lake Champlain",
   d:"The train runs along the lake shore with the Adirondacks rising on the far side."},
+ /* Added because the eastern and southern long-distance trains had nothing at
+    all against them: the Crescent ran thirty-two hours with an empty window
+    row. These five are the stretches those routes are actually known for. */
+ {lat:33.16,lng:-117.40,r:35,dir:"W",n:"San Clemente to Del Mar coast",
+  d:"Sixty miles of track laid on the beach itself, surfers close enough to count, and the Del Mar bluffs falling straight into the Pacific."},
+ {lat:44.05,lng:-91.67,r:40,dir:"E",n:"Upper Mississippi bluffs",
+  d:"From La Crosse the line crosses to the Minnesota bank and follows the river north under 500-foot bluffs, past Winona and Red Wing. Eagles most of the year."},
+ {lat:30.17,lng:-89.83,r:12,dir:"BOTH",n:"Lake Pontchartrain trestle",
+  d:"Nearly six miles of track on piles across open water into New Orleans. No land on either side for most of the crossing."},
+ {lat:29.72,lng:-101.35,r:12,dir:"BOTH",n:"Pecos River High Bridge",
+  d:"The track crosses the Pecos gorge 320 feet up, the highest railroad bridge in Texas, just before the river meets the Rio Grande."},
+ {lat:42.36,lng:-73.15,r:20,dir:"BOTH",n:"Berkshire Hills & Washington Summit",
+  d:"The old Boston & Albany climbs to 1,459 feet through the Berkshires, the high point of the whole run west from Boston."},
 ];
 const CARD={N:"north",NE:"northeast",E:"east",SE:"southeast",S:"south",SW:"southwest",W:"west",NW:"northwest"};
 const DIRV={N:0,NE:45,E:90,SE:135,S:180,SW:225,W:270,NW:315};
