@@ -4,12 +4,14 @@
   <p class="sub" id="legSub"></p>
 
   <div class="picker">
-    <label class="pk"><span>Route</span><select id="routeSel"></select></label>
-    <label class="pk"><span>From</span><select id="origSel"></select></label>
-    <label class="pk pk-swap"><span>&nbsp;</span><button id="swapBtn" class="iconbtn" type="button" title="Reverse direction">⇄</button></label>
-    <label class="pk"><span>To</span><select id="destSel"></select></label>
+    <label class="pk"><span>From</span><input id="origIn" list="allStops" autocomplete="off" placeholder="any station"></label>
+    <label class="pk pk-swap"><span>&nbsp;</span><button id="swapBtn" class="iconbtn" type="button" title="Reverse direction" aria-label="Reverse direction">⇄</button></label>
+    <label class="pk"><span>To</span><input id="destIn" list="allStops" autocomplete="off" placeholder="any station"></label>
+    <label class="pk"><span>Service</span><select id="routeSel"></select></label>
     <label class="pk"><span>Date</span><input type="date" id="depDate"></label>
   </div>
+  <p class="pk-msg" id="pkMsg"></p>
+  <datalist id="allStops"></datalist>
 
   <div class="controls">
     <div class="seg" id="carrierCtl" role="group" aria-label="Choose carrier">

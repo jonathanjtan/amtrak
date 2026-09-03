@@ -9,6 +9,19 @@ const CARRIER_NAME={verizon:"Verizon",att:"AT&T",tmobile:"T-Mobile"};
 const PAL={dark:{good:"#43b98a",spotty:"#e6a93c",dead:"#e5544a"},light:{good:"#1f9e6e",spotty:"#bd7c11",dead:"#cf3b31"}};
 const STAT={good:"Usable",spotty:"Spotty",dead:"No service"};
 const LONG={g:"good",s:"spotty",d:"dead"};
+/* The feed's names are inconsistent for a few big stations, and three Boston
+   stops share one name; these are display fixes, not new data. */
+const NAME_FIX={NYP:"New York Penn Station",BOS:"Boston South Station",BBY:"Boston Back Bay",
+  BON:"Boston North Station",WAS:"Washington Union Station",PHL:"Philadelphia 30th Street",
+  NHV:"New Haven Union Station",STS:"New Haven State Street"};
+/* extra words people are likely to type */
+const ALIAS={NYP:"nyc new york city penn moynihan",WAS:"dc washington",LAX:"los angeles la union",
+  CHI:"chicago union",EMY:"emeryville san francisco bay",SFC:"san francisco",PDX:"portland oregon",
+  POR:"portland maine",SEA:"seattle king street",NOL:"new orleans"};
+const stationName=c=>NAME_FIX[c]||ST[c][0];
+const stopLabel=c=>stationName(c)+(ST[c][4]?", "+ST[c][4]:"")+" ("+c+")";
+const searchKey=c=>(stationName(c)+" "+(ST[c][4]||"")+" "+c+" "+(ALIAS[c]||"")).toLowerCase();
+
 
 /* ---------- time zones ---------- */
 const _dtf={};
@@ -132,7 +145,7 @@ function buildLeg(){
   for(let i=o;i<=e;i++){
     const c=stops[i][0], s=ST[c];
     const t=(stops[i][1]-stops[o][1])/60;
-    L.stops.push({code:c,name:s[0],lat:s[1],lng:s[2],tz:TZ[s[3]],t:t,
+    L.stops.push({code:c,name:stationName(c),lat:s[1],lng:s[2],tz:TZ[s[3]],t:t,
                   inst:new Date(inst.getTime()+t*3600000)});
   }
   L.TOTAL=L.stops[L.stops.length-1].t;

@@ -80,7 +80,7 @@ function drawCards(){
     cards.appendChild(d);
   });
 }
-const shortName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"");
+const shortName=n=>n.replace(/ Amtrak.*/,"").replace(/ Station$/,"").replace(/,.*/,"").replace(/ Union.*/,"").trim();
 
 /* ================= sights ================= */
 function compass(dir){

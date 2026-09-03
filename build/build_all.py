@@ -59,9 +59,33 @@ tzs=[];tzi={}
 def tz(name):
     if name not in tzi: tzi[name]=len(tzs); tzs.append(name)
     return tzi[name]
+ABBR={"Alabama":"AL","Arizona":"AZ","Arkansas":"AR","California":"CA","Colorado":"CO","Connecticut":"CT",
+"Delaware":"DE","District of Columbia":"DC","Florida":"FL","Georgia":"GA","Idaho":"ID","Illinois":"IL",
+"Indiana":"IN","Iowa":"IA","Kansas":"KS","Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD",
+"Massachusetts":"MA","Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO","Montana":"MT",
+"Nebraska":"NE","Nevada":"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY",
+"North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma":"OK","Oregon":"OR","Pennsylvania":"PA",
+"Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT",
+"Vermont":"VT","Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY"}
+def inring(lng,lat,ring):
+    inside=False; n=len(ring)
+    for i in range(n):
+        x1,y1=ring[i]; x2,y2=ring[(i+1)%n]
+        if (y1>lat)!=(y2>lat):
+            xin=x1+(lat-y1)*(x2-x1)/((y2-y1) or 1e-12)
+            if lng<xin: inside=not inside
+    return inside
+def stateOf(lat,lng):
+    for st in geo["states"]:
+        for ring in st["r"]:
+            xs=[p[0] for p in ring]; ys=[p[1] for p in ring]
+            if lng<min(xs) or lng>max(xs) or lat<min(ys) or lat>max(ys): continue
+            if inring(lng,lat,ring): return ABBR.get(st["n"],"")
+    return ""
 ST={}
 for c in R["used"]:
-    s=stops[c]; ST[c]=[s["stop_name"],round(float(s["stop_lat"]),4),round(float(s["stop_lon"]),4),tz(s["stop_timezone"])]
+    s=stops[c]; la=round(float(s["stop_lat"]),4); ln=round(float(s["stop_lon"]),4)
+    ST[c]=[s["stop_name"],la,ln,tz(s["stop_timezone"]),stateOf(la,ln)]
 its=[];totpts=0
 for p in R["patterns"]:
     full=SHAPE.get(p["shape"])

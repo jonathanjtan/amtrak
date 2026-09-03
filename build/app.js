@@ -1,50 +1,95 @@
-/* ================= route picker ================= */
-const routeSel=$("routeSel"),origSel=$("origSel"),destSel=$("destSel"),
+/* ================= station-first picker =================
+   You name two stations; the page finds the services that run between them,
+   in that order, and picks the quickest. The route select then only offers
+   services that actually serve both. */
+const routeSel=$("routeSel"),origIn=$("origIn"),destIn=$("destIn"),pkMsg=$("pkMsg"),
       liveOn=$("liveOn"),depDate=$("depDate"),scrub=$("scrub"),scrubRow=$("scrubRow"),
       scrubVal=$("scrubVal"),liveStatus=$("liveStatus"),delayEl=$("delay");
-(function fillRoutes(){
-  const byName={};
-  ITS.forEach((it,i)=>{(byName[it.n]=byName[it.n]||[]).push(i);});
-  Object.keys(byName).sort().forEach(n=>{
-    const og=document.createElement("optgroup");og.label=n;
-    byName[n].forEach(i=>{
-      const it=ITS[i],a=ST[it.s[0][0]][0],b=ST[it.s[it.s.length-1][0]][0];
-      const o=document.createElement("option");o.value=i;
-      o.textContent=shortName(a)+" → "+shortName(b)+(it.tr?"  ("+it.tr+")":"");
-      og.appendChild(o);});
-    routeSel.appendChild(og);});
+let fromCode=null,toCode=null;
+(function fillStopList(){
+  const dl=$("allStops"), seen=new Set();
+  ITS.forEach(it=>it.s.forEach(s=>seen.add(s[0])));
+  [...seen].map(c=>[stopLabel(c),c]).sort().forEach(([lab])=>{
+    const o=document.createElement("option");o.value=lab;dl.appendChild(o);
+  });
 })();
-function fillStops(keepO,keepD){
-  origSel.innerHTML="";destSel.innerHTML="";
-  IT.s.forEach((s,i)=>{
-    const nm=shortName(ST[s[0]][0]);
-    const a=document.createElement("option");a.value=i;a.textContent=nm;origSel.appendChild(a);
-    const b=document.createElement("option");b.value=i;b.textContent=nm;destSel.appendChild(b);
-  });
-  O=(keepO!==undefined&&keepO<IT.s.length)?keepO:0;
-  E=(keepD!==undefined&&keepD<IT.s.length&&keepD>O)?keepD:IT.s.length-1;
-  origSel.value=O;destSel.value=E;
+const SERVED=(()=>{const m={};ITS.forEach(it=>it.s.forEach(s=>{m[s[0]]=(m[s[0]]||0)+1;}));return m;})();
+function codeFromInput(v){
+  if(!v) return null;
+  v=v.trim(); if(!v) return null;
+  const m=v.match(/\(([A-Z]{3})\)\s*$/);
+  if(m&&ST[m[1]]) return m[1];
+  const up=v.toUpperCase();
+  if(ST[up]&&up.length===3) return up;
+  const q=v.toLowerCase().replace(/[.,]/g," ").split(/\s+/).filter(Boolean);
+  let best=null,bestScore=-1;
+  for(const c in ST){
+    if(!SERVED[c]) continue;
+    const key=searchKey(c);
+    if(!q.every(t=>key.indexOf(t)>=0)) continue;
+    /* prefer an exact name, then a prefix, then whichever station more trains serve */
+    const nm=stationName(c).toLowerCase();
+    let score=SERVED[c];
+    if(nm===v.toLowerCase()) score+=1e6;
+    else if(nm.startsWith(q[0])) score+=1e3;
+    if(score>bestScore){bestScore=score;best=c;}
+  }
+  return best;
 }
-function setRoute(i,keepO,keepD){IT=ITS[i];fillStops(keepO,keepD);rebuild();}
-routeSel.addEventListener("change",()=>setRoute(+routeSel.value));
-origSel.addEventListener("change",()=>{
-  O=+origSel.value; if(E<=O){E=Math.min(IT.s.length-1,O+1);destSel.value=E;} rebuild();});
-destSel.addEventListener("change",()=>{
-  E=+destSel.value; if(E<=O){O=Math.max(0,E-1);origSel.value=O;} rebuild();});
-$("swapBtn").addEventListener("click",()=>{
-  /* jump to the opposite-direction itinerary of the same route when there is one */
-  const cur=ITS[+routeSel.value], oc=IT.s[O][0], dc=IT.s[E][0];
-  let best=-1;
+/* every service running from a to b in that order, quickest first */
+function servicesFor(a,b){
+  const out=[];
   ITS.forEach((it,i)=>{
-    if(it.n!==cur.n||it.d===cur.d)return;
-    const codes=it.s.map(s=>s[0]);
-    if(codes.indexOf(dc)>=0&&codes.indexOf(oc)>codes.indexOf(dc)&&best<0) best=i;
+    const codes=it.s.map(x=>x[0]), ia=codes.indexOf(a);
+    if(ia<0) return;
+    if(b===null){ out.push({i:i,o:ia,e:codes.length-1,mins:it.s[codes.length-1][1]-it.s[ia][1]}); return; }
+    const ib=codes.indexOf(b,ia+1);
+    if(ib<0) return;
+    out.push({i:i,o:ia,e:ib,mins:it.s[ib][1]-it.s[ia][1]});
   });
-  if(best<0){liveStatus.textContent="no return service in the feed";return;}
-  routeSel.value=best; IT=ITS[best];
-  const codes=IT.s.map(s=>s[0]);
-  fillStops(codes.indexOf(dc),codes.indexOf(oc));
+  out.sort((x,y)=>x.mins-y.mins);
+  return out;
+}
+function fillRouteSel(list,keep){
+  routeSel.innerHTML="";
+  list.forEach(c=>{
+    const it=ITS[c.i];
+    const o=document.createElement("option");
+    o.value=c.i+":"+c.o+":"+c.e;
+    o.textContent=it.n+(it.tr?" ("+it.tr+")":"")+" · "+fmtDur(c.mins/60);
+    routeSel.appendChild(o);
+  });
+  routeSel.value=keep||list[0].value||(list[0].i+":"+list[0].o+":"+list[0].e);
+  if(!routeSel.value) routeSel.value=list[0].i+":"+list[0].o+":"+list[0].e;
+}
+function applyChoice(){
+  const p=routeSel.value.split(":").map(Number);
+  IT=ITS[p[0]];O=p[1];E=p[2];
+  fromCode=IT.s[O][0];toCode=IT.s[E][0];
+  origIn.value=stopLabel(fromCode);destIn.value=stopLabel(toCode);
   rebuild();
+}
+function repick(preferIdx){
+  const a=codeFromInput(origIn.value), b=codeFromInput(destIn.value);
+  if(!a){pkMsg.textContent="Pick a departure station from the list.";return;}
+  const list=servicesFor(a,b&&b!==a?b:null);
+  if(!list.length){
+    pkMsg.textContent="No single Amtrak route runs "+shortName(ST[a][0])+" → "+
+      shortName(ST[b][0])+". That journey needs a connection, so pick one leg of it.";
+    return;
+  }
+  pkMsg.textContent=list.length>1?(list.length+" services run this, quickest first."):"";
+  let keep=null;
+  if(preferIdx!==undefined){const m=list.find(c=>c.i===preferIdx); if(m) keep=m.i+":"+m.o+":"+m.e;}
+  fillRouteSel(list,keep);
+  applyChoice();
+}
+origIn.addEventListener("change",()=>repick());
+destIn.addEventListener("change",()=>repick());
+routeSel.addEventListener("change",applyChoice);
+$("swapBtn").addEventListener("click",()=>{
+  const a=origIn.value; origIn.value=destIn.value; destIn.value=a;
+  repick();
 });
 document.getElementById("carrierCtl").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
@@ -180,14 +225,17 @@ function rebuild(){
   const n=new Date();
   depDate.value=n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2)+"-"+("0"+n.getDate()).slice(-2);
   const fromURL=readURL();
-  if(fromURL!==-1){ routeSel.value=fromURL.i; IT=ITS[fromURL.i]; fillStops(fromURL.o,fromURL.e); }
-  else{
+  if(fromURL!==-1){
+    origIn.value=stopLabel(ITS[fromURL.i].s[fromURL.o][0]);
+    destIn.value=stopLabel(ITS[fromURL.i].s[fromURL.e][0]);
+    repick(fromURL.i);
+  }else{
     /* open on the California Zephyr, the route this page started as */
-    let start=ITS.findIndex(it=>it.n==="California Zephyr"&&it.s[0][0]==="EMY");
-    if(start<0) start=0;
-    routeSel.value=start; IT=ITS[start]; fillStops();
+    origIn.value=stopLabel("EMY"); destIn.value=stopLabel("CHI");
+    const z=ITS.findIndex(it=>it.n==="California Zephyr"&&it.s[0][0]==="EMY");
+    repick(z<0?undefined:z);
   }
-  rebuild(); setLiveMode();
+  setLiveMode();
 })();
 
 /* ================= live high-res map (Esri tiles, needs internet) ================= */
