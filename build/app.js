@@ -264,6 +264,7 @@ $("themeBtn").addEventListener("click",()=>{
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
   paintRoute();drawTimeline();drawCards();updateAgenda();
   if(window.__recolorLive)window.__recolorLive();
+  remember();
 });
 
 /* ================= live position ================= */
@@ -326,6 +327,28 @@ function fillAnchor(){
     o.textContent=shortName(s.name)+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
 }
 
+/* ================= remembered state =================
+   Reloading used to drop everything back to the Zephyr. Storage can throw
+   outright in private mode or from a local file, so every access is guarded. */
+const STORE="amtrak.leg.v1";
+function remember(){
+  try{
+    localStorage.setItem(STORE,JSON.stringify({
+      r:IT.n,t:IT.tr,from:IT.s[O][0],to:IT.s[E][0],
+      on:depDate.value,c:carrier,theme:theme}));
+  }catch(e){}
+}
+function recall(){
+  try{
+    const v=JSON.parse(localStorage.getItem(STORE)||"null");
+    if(!v||!v.from||!v.to) return null;
+    /* a saved date in the past is worse than today's, so let it go */
+    const today=new Date(); const t0=today.getFullYear()+"-"+("0"+(today.getMonth()+1)).slice(-2)+"-"+("0"+today.getDate()).slice(-2);
+    if(!v.on||v.on<t0) v.on=t0;
+    return v;
+  }catch(e){ return null; }
+}
+
 /* ================= shareable state ================= */
 /* Stop codes rather than indices, so a link survives a rebuild of the data. */
 function writeURL(){
@@ -339,6 +362,37 @@ function writeURL(){
   if(carrier!=="verizon")q.set("c",carrier);
   history.replaceState(null,"",location.pathname+"?"+q.toString());
   }catch(e){}
+  remember();
+}
+/* Returns true when a saved leg was restored. A leg the feed no longer runs
+   just falls through to the default rather than failing. */
+function applySaved(){
+  const v=recall();
+  if(!v) return false;
+  if(v.on) depDate.value=v.on;
+  if(v.c&&CARRIER_NAME[v.c]){
+    carrier=v.c;
+    [...$("carrierCtl").children].forEach(b=>{
+      const on=b.dataset.carrier===v.c;
+      b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on));
+    });
+  }
+  if(v.theme==="light"||v.theme==="dark"){
+    theme=v.theme;
+    document.documentElement.dataset.theme=theme;
+    $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
+  }
+  if(!ST[v.from]||!ST[v.to]) return false;
+  let idx=-1;
+  ITS.forEach((it,i)=>{
+    if(it.n!==v.r) return;
+    const codes=it.s.map(x=>x[0]), a=codes.indexOf(v.from), b=codes.indexOf(v.to);
+    if(a<0||b<=a) return;
+    if(idx<0||(v.t&&it.tr===v.t)) idx=i;
+  });
+  origIn.value=stopLabel(v.from); destIn.value=stopLabel(v.to);
+  repick(idx<0?undefined:idx);
+  return !!LEG;
 }
 function readURL(){
   try{
@@ -390,6 +444,8 @@ function rebuild(){
     origIn.value=stopLabel(ITS[fromURL.i].s[fromURL.o][0]);
     destIn.value=stopLabel(ITS[fromURL.i].s[fromURL.e][0]);
     repick(fromURL.i);
+  }else if(applySaved()){
+    /* restored from last visit */
   }else{
     /* open on the California Zephyr, the route this page started as */
     origIn.value=stopLabel("EMY"); destIn.value=stopLabel("CHI");

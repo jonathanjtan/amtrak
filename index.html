@@ -695,12 +695,15 @@ function nextRunOf(t,want){const c=LEG.cov; let i=c.findIndex(s=>t<s.t1); if(i<0
 
 /* ================= projection: refit to whatever leg is showing ================= */
 const VW=1000,VH=430,PAD=26;
-let PJ={sc:1,ox:0,oy:0,cos:1,lng0:0,lat0:0};
+let PJ={sc:1,ox:0,oy:0,cos:1,lng0:0,lat0:0}, SPAN=30;
 function fitProjection(){
   let mnLat=90,mxLat=-90,mnLng=180,mxLng=-180;
   LEG.poly.forEach(p=>{mnLat=Math.min(mnLat,p[0]);mxLat=Math.max(mxLat,p[0]);
                        mnLng=Math.min(mnLng,p[1]);mxLng=Math.max(mxLng,p[1]);});
-  const padLat=Math.max(0.55,(mxLat-mnLat)*0.18), padLng=Math.max(0.75,(mxLng-mnLng)*0.10);
+  /* Padding floors used to be sized for a transcontinental leg, which left a
+     twenty-mile hop as a speck in an empty frame. */
+  SPAN=Math.max(mxLng-mnLng,(mxLat-mnLat)*1.6);
+  const padLat=Math.max(0.16,(mxLat-mnLat)*0.18), padLng=Math.max(0.22,(mxLng-mnLng)*0.10);
   mnLat-=padLat;mxLat+=padLat;mnLng-=padLng;mxLng+=padLng;
   const cos=Math.cos((mnLat+mxLat)/2*Math.PI/180);
   const gW=(mxLng-mnLng)*cos, gH=(mxLat-mnLat);
@@ -722,6 +725,8 @@ function drawMap(){
   labels=[];dots=[];vis=[];groups=[];segEls=[];stationRefs=[];
   fitProjection();
   const inView=(lat,lng)=>{const x=px(lng),y=py(lat);return x>-160&&x<VW+160&&y>-160&&y<VH+160;};
+  /* a short leg has room for more town names before it looks crowded */
+  const LOD=SPAN<1.5?0.34:(SPAN<4?0.5:(SPAN<12?0.75:1));
   /* states */
   const g=el("g",{}); vp.appendChild(g);
   DATA.states.forEach(s=>s.r.forEach(ring=>{
@@ -747,7 +752,7 @@ function drawMap(){
     const x=px(c[1]),y=py(c[0]);
     const dot=el("circle",{cx:x,cy:y,class:"town-dot"});vp.appendChild(dot);regDot(dot,1.6);
     const lb=el("text",{x:x+3,y:y+3.5,class:"town-lbl"});lb.textContent=c[3];
-    vp.appendChild(lb);regLabel(lb,8.5,i<12?1.2:(i<45?2.0:3.0));
+    vp.appendChild(lb);regLabel(lb,8.5,(i<12?1.2:(i<45?2.0:3.0))*LOD);
   });
   /* route, one path per coverage sub-segment */
   covRuns().forEach(seg=>{
@@ -790,7 +795,7 @@ function drawMap(){
     gg.appendChild(lb);
     const tm=el("text",{x:x,y:y+(above?-19:25),class:"st-time","text-anchor":"middle"});
     gg.appendChild(tm); vp.appendChild(gg);
-    const mz=major?1:(N>22?(i%3===0?2.1:3.0):(N>12?1.9:1.3));
+    const mz=(major?1:(N>22?(i%3===0?2.1:3.0):(N>12?1.9:1.3)))*(SPAN<4?0.6:1);
     regLabel(lb,major?11:9.5,mz); regLabel(tm,major?9.5:8.5,mz);
     stationRefs.push({node:tm,i:i});
   });
@@ -1401,6 +1406,7 @@ $("themeBtn").addEventListener("click",()=>{
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
   paintRoute();drawTimeline();drawCards();updateAgenda();
   if(window.__recolorLive)window.__recolorLive();
+  remember();
 });
 
 /* ================= live position ================= */
@@ -1463,6 +1469,28 @@ function fillAnchor(){
     o.textContent=shortName(s.name)+" (sched "+clockAt(s.t).time+")";sel.appendChild(o);});
 }
 
+/* ================= remembered state =================
+   Reloading used to drop everything back to the Zephyr. Storage can throw
+   outright in private mode or from a local file, so every access is guarded. */
+const STORE="amtrak.leg.v1";
+function remember(){
+  try{
+    localStorage.setItem(STORE,JSON.stringify({
+      r:IT.n,t:IT.tr,from:IT.s[O][0],to:IT.s[E][0],
+      on:depDate.value,c:carrier,theme:theme}));
+  }catch(e){}
+}
+function recall(){
+  try{
+    const v=JSON.parse(localStorage.getItem(STORE)||"null");
+    if(!v||!v.from||!v.to) return null;
+    /* a saved date in the past is worse than today's, so let it go */
+    const today=new Date(); const t0=today.getFullYear()+"-"+("0"+(today.getMonth()+1)).slice(-2)+"-"+("0"+today.getDate()).slice(-2);
+    if(!v.on||v.on<t0) v.on=t0;
+    return v;
+  }catch(e){ return null; }
+}
+
 /* ================= shareable state ================= */
 /* Stop codes rather than indices, so a link survives a rebuild of the data. */
 function writeURL(){
@@ -1476,6 +1504,37 @@ function writeURL(){
   if(carrier!=="verizon")q.set("c",carrier);
   history.replaceState(null,"",location.pathname+"?"+q.toString());
   }catch(e){}
+  remember();
+}
+/* Returns true when a saved leg was restored. A leg the feed no longer runs
+   just falls through to the default rather than failing. */
+function applySaved(){
+  const v=recall();
+  if(!v) return false;
+  if(v.on) depDate.value=v.on;
+  if(v.c&&CARRIER_NAME[v.c]){
+    carrier=v.c;
+    [...$("carrierCtl").children].forEach(b=>{
+      const on=b.dataset.carrier===v.c;
+      b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on));
+    });
+  }
+  if(v.theme==="light"||v.theme==="dark"){
+    theme=v.theme;
+    document.documentElement.dataset.theme=theme;
+    $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
+  }
+  if(!ST[v.from]||!ST[v.to]) return false;
+  let idx=-1;
+  ITS.forEach((it,i)=>{
+    if(it.n!==v.r) return;
+    const codes=it.s.map(x=>x[0]), a=codes.indexOf(v.from), b=codes.indexOf(v.to);
+    if(a<0||b<=a) return;
+    if(idx<0||(v.t&&it.tr===v.t)) idx=i;
+  });
+  origIn.value=stopLabel(v.from); destIn.value=stopLabel(v.to);
+  repick(idx<0?undefined:idx);
+  return !!LEG;
 }
 function readURL(){
   try{
@@ -1527,6 +1586,8 @@ function rebuild(){
     origIn.value=stopLabel(ITS[fromURL.i].s[fromURL.o][0]);
     destIn.value=stopLabel(ITS[fromURL.i].s[fromURL.e][0]);
     repick(fromURL.i);
+  }else if(applySaved()){
+    /* restored from last visit */
   }else{
     /* open on the California Zephyr, the route this page started as */
     origIn.value=stopLabel("EMY"); destIn.value=stopLabel("CHI");

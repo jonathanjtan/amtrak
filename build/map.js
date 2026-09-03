@@ -1,11 +1,14 @@
 /* ================= projection: refit to whatever leg is showing ================= */
 const VW=1000,VH=430,PAD=26;
-let PJ={sc:1,ox:0,oy:0,cos:1,lng0:0,lat0:0};
+let PJ={sc:1,ox:0,oy:0,cos:1,lng0:0,lat0:0}, SPAN=30;
 function fitProjection(){
   let mnLat=90,mxLat=-90,mnLng=180,mxLng=-180;
   LEG.poly.forEach(p=>{mnLat=Math.min(mnLat,p[0]);mxLat=Math.max(mxLat,p[0]);
                        mnLng=Math.min(mnLng,p[1]);mxLng=Math.max(mxLng,p[1]);});
-  const padLat=Math.max(0.55,(mxLat-mnLat)*0.18), padLng=Math.max(0.75,(mxLng-mnLng)*0.10);
+  /* Padding floors used to be sized for a transcontinental leg, which left a
+     twenty-mile hop as a speck in an empty frame. */
+  SPAN=Math.max(mxLng-mnLng,(mxLat-mnLat)*1.6);
+  const padLat=Math.max(0.16,(mxLat-mnLat)*0.18), padLng=Math.max(0.22,(mxLng-mnLng)*0.10);
   mnLat-=padLat;mxLat+=padLat;mnLng-=padLng;mxLng+=padLng;
   const cos=Math.cos((mnLat+mxLat)/2*Math.PI/180);
   const gW=(mxLng-mnLng)*cos, gH=(mxLat-mnLat);
@@ -27,6 +30,8 @@ function drawMap(){
   labels=[];dots=[];vis=[];groups=[];segEls=[];stationRefs=[];
   fitProjection();
   const inView=(lat,lng)=>{const x=px(lng),y=py(lat);return x>-160&&x<VW+160&&y>-160&&y<VH+160;};
+  /* a short leg has room for more town names before it looks crowded */
+  const LOD=SPAN<1.5?0.34:(SPAN<4?0.5:(SPAN<12?0.75:1));
   /* states */
   const g=el("g",{}); vp.appendChild(g);
   DATA.states.forEach(s=>s.r.forEach(ring=>{
@@ -52,7 +57,7 @@ function drawMap(){
     const x=px(c[1]),y=py(c[0]);
     const dot=el("circle",{cx:x,cy:y,class:"town-dot"});vp.appendChild(dot);regDot(dot,1.6);
     const lb=el("text",{x:x+3,y:y+3.5,class:"town-lbl"});lb.textContent=c[3];
-    vp.appendChild(lb);regLabel(lb,8.5,i<12?1.2:(i<45?2.0:3.0));
+    vp.appendChild(lb);regLabel(lb,8.5,(i<12?1.2:(i<45?2.0:3.0))*LOD);
   });
   /* route, one path per coverage sub-segment */
   covRuns().forEach(seg=>{
@@ -95,7 +100,7 @@ function drawMap(){
     gg.appendChild(lb);
     const tm=el("text",{x:x,y:y+(above?-19:25),class:"st-time","text-anchor":"middle"});
     gg.appendChild(tm); vp.appendChild(gg);
-    const mz=major?1:(N>22?(i%3===0?2.1:3.0):(N>12?1.9:1.3));
+    const mz=(major?1:(N>22?(i%3===0?2.1:3.0):(N>12?1.9:1.3)))*(SPAN<4?0.6:1);
     regLabel(lb,major?11:9.5,mz); regLabel(tm,major?9.5:8.5,mz);
     stationRefs.push({node:tm,i:i});
   });
