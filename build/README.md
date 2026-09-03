@@ -68,6 +68,21 @@ in git at `1be12e7:index.html`. Current fit: **84%** agreement at station-segmen
 midpoints, and **76%** when sub-segments are collapsed to one status per station
 segment. Errors are nearly all one class apart.
 
+### Spot checks on other routes
+
+The fit is against one route, so the model was checked against places known to be
+bad. Its longest dead runs land where they should:
+
+| Route | Longest dead run found |
+|---|---|
+| Sunset Limited | Alpine → Del Rio, 2h 09m (the Sanderson stretch of West Texas) |
+| Empire Builder | Williston → Havre, 2h 57m (the Montana Hi-Line) |
+| Coast Starlight | Redding → Klamath Falls, 3h 46m (the Cascade crossing) |
+| Southwest Chief | Trinidad → Raton, 1h 02m (Raton Pass) |
+
+None of these are curated; they fall out of population, town density and track
+sinuosity alone.
+
 ### What did not work
 
 Adding highway proximity, from the US Census TIGER primary-roads shapefile
