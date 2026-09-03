@@ -44,7 +44,7 @@ Running days come from `calendar.txt`, unioned across every trip sharing a
 terminal pair, so the Sunset Limited reads Mon/Wed/Sat westbound and Wed/Fri/Sun
 eastbound rather than a route-wide blur.
 
-Two GTFS details the build depends on:
+Three GTFS details the build depends on:
 
 - **Times are in the agency timezone (Eastern), not local to each stop.** Elapsed
   time is the raw difference; only the displayed clock changes zone. Reading them
@@ -53,6 +53,14 @@ Two GTFS details the build depends on:
 - **Some shapes are stored running the opposite way down the line.** Snapping
   stations to the track stalls unless the shape is flipped first. Detected by
   comparing the first stop's distance to each end.
+- **A stop's time is its departure, and the dwell is a separate field.** Some
+  waits are hours: four at San Antonio on the Texas Eagle, where the cars are
+  handed to the Sunset Limited, and nearly as long at Philadelphia on the
+  overnight Regional, which spends a third of its schedule standing. Reading the
+  one time as the whole stop models the wait as motion, which put the train 73 km
+  from San Antonio at the moment it pulled in. Travel runs from one departure to
+  the next arrival; a stop with a wait appears twice in the polyline so position
+  lookups hold still through it.
 
 Coverage is sampled roughly every 25 km, so a long nonstop leg gets real
 resolution rather than a fixed handful of samples: the Auto Train's single
