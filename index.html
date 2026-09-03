@@ -2067,9 +2067,13 @@ function updateTrain(){
   if(scrubVal)scrubVal.textContent=fmtDur(Math.min(t,LEG.TOTAL))+" in";
 }
 /* One way in for every control that moves the train */
+/* The slider steps in hundredths of an hour and stop times are whole minutes,
+   so truncating to two places lands 36 seconds short. Clicking Roseville then
+   reported "past Sacramento, next Roseville" — you had asked to go there and
+   the page said you had not arrived. Round up instead. */
 function seekTo(t){
   if(liveOn.checked){ liveOn.checked=false; setLiveMode(); }
-  scrub.value=Math.max(0,Math.min(LEG.TOTAL,t)).toFixed(2);
+  scrub.value=(Math.ceil(Math.max(0,Math.min(LEG.TOTAL,t))*100)/100).toFixed(2);
   updateTrain();
 }
 /* Click or drag the strip to move through the trip. Direct manipulation beats
@@ -2290,7 +2294,7 @@ function rebuild(){
      showed a confident set of days for a trip nobody had chosen */
   if(!depDate.value) depDate.value=todayStr();
   LEG=buildLeg();
-  scrub.max=LEG.TOTAL.toFixed(2);
+  scrub.max=(Math.ceil(LEG.TOTAL*100)/100).toFixed(2);  /* or the slider cannot reach the last stop */
   if(+scrub.value>LEG.TOTAL) scrub.value=0;
   const a=LEG.stops[0], b=LEG.stops[LEG.stops.length-1];
   $("legTitle").textContent=a.short+" → "+b.short;
