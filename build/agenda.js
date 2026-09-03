@@ -14,9 +14,8 @@ function agEvents(){
   const ev=[];
   LEG.stops.forEach((s,i)=>{
     if(i===0) return;
-    const dw=IT.s[O+i][2]||0;
     ev.push({t:s.t,pri:2,title:s.short,
-      sub:dw>=8?("station stop · about "+dw+" min on the platform"):"station stop"});
+      sub:s.dwell>=8?("station stop · about "+s.dwell+" min on the platform"):"station stop"});
   });
   LEG.sights.forEach(s=>ev.push({t:s.t,pri:1,title:s.n,sub:lookText(s)}));
   LEG.meals.forEach(m=>ev.push({t:m.a,pri:2,title:m.name+" opens",
@@ -80,11 +79,8 @@ function agTipList(t){
   if(mn) add("▨",'<b>'+mn.name+' is being served.</b> Last call ~'+clockAt(Math.max(mn.a,mn.b-LAST_CALL)).time+'. Sleeper fares include it; coach can join if seats are free.');
   else if(nm&&nm.a-t<=1.2) add("▨",'<b>'+nm.name+' opens in ~'+fmtDur(nm.a-t)+'.</b>'+(nm.name==="Dinner"?' It is by reservation, so catch your car attendant now.':''));
   else if(nm&&nm.name==="Dinner"&&nm.a-t<=4) add("▨",'<b>Reserve dinner</b> with your car attendant. Tonight\'s seating fills through the afternoon.');
-  if(st){
-    const i=LEG.stops.indexOf(st), dw=IT.s[O+i][2]||0;
-    if(st.t-t<=0.6&&dw>=10)
-      add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+dw+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
-  }
+  if(st&&st.t-t<=0.6&&st.dwell>=10)
+    add("▮",'<b>'+st.short+' in ~'+fmtDur(st.t-t)+'.</b> About '+st.dwell+' min on the platform: fresh air, and'+(covAt(st.t)==="good"?' the most reliable signal for a while.':' a chance to stretch.'));
   /* on a leg that hands you to another train, the change is the thing to know */
   const cx=(typeof journey!=="undefined"&&journey)?journeyLegContext():null;
   if(cx&&LEG.TOTAL-t<=Math.max(2,LEG.TOTAL/8)){
@@ -171,10 +167,12 @@ function updateAgenda(t){
     return;
   }
   const i=stopIndexAt(t), st=covAt(t), run=covRun(t), c=clockAt(t),
-        atStation=(t-LEG.stops[i].t)<0.12;
+        here=LEG.stops[i], atStation=t<=here.td+0.12,
+        /* still standing there: say how long is left, it is the whole question */
+        platform=(here.dwell&&t<here.td)?(" · "+fmtDur(here.td-t)+" left on the platform"):"";
   agNowEl.innerHTML=
     '<div class="ag-hero"><span class="chip" style="background:'+pal[st]+';color:'+((theme==="light"&&st==="spotty")?"#fff":"#0c1116")+'">'+STAT[st]+'</span>'+
-    '<p class="ag-where">'+(atStation?("At "+LEG.stops[i].short):(stopName(i)+" → "+stopName(i+1)))+'</p></div>'+
+    '<p class="ag-where">'+(atStation?("At "+here.short+platform):(stopName(i)+" → "+stopName(i+1)))+'</p></div>'+
     '<p class="ag-stamp">'+c.full+' · '+fmtDur(t)+' in · '+fmtDur(LEG.TOTAL-t)+' to '+stopName(LEG.stops.length-1)+'</p>'+
     '<div class="ag-rows" id="agRows"></div>';
   const rows=[], nx=run.t1<LEG.TOTAL-1e-6?covAt(run.t1+1e-6):null;

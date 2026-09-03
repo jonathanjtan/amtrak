@@ -238,30 +238,53 @@ function buildLeg(){
      Adding raw minutes instead would be an hour out either way across a
      daylight-saving change, which every long-distance train crosses twice a year. */
   const at=i=>agencyInstant(start.date,depMin+stops[i][1]);
+  /* The feed's time for a stop is its departure, and the third field is how long
+     the train stands there. Some of those waits are hours: four at San Antonio
+     on the Texas Eagle, where the cars are handed to the Sunset Limited, nearly
+     as long at Philadelphia on the overnight Regional. Treating a stop as a
+     single instant put the train hundreds of miles down the line while it was
+     still on the platform, and took the coverage, the scenery and the darkness
+     with it. So each stop carries an arrival and a departure, and travel happens
+     between one departure and the next arrival. */
+  const atArr=i=>agencyInstant(start.date,depMin+stops[i][1]-(i===o?0:(stops[i][2]||0)));
   const L={stops:[],poly:[],polyT:[],cov:[],dep:inst,TOTAL:0};
   for(let i=o;i<=e;i++){
-    const c=stops[i][0], s=ST[c], gi=at(i);
+    const c=stops[i][0], s=ST[c], gd=at(i), ga=atArr(i);
     L.stops.push({code:c,name:stationName(c),short:place(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
-                  t:(gi-inst)/3600000, inst:gi});
+                  dwell:(i===o)?0:(stops[i][2]||0),   /* you board at the origin; its wait is not yours */
+                  t:(ga-inst)/3600000, td:(gd-inst)/3600000, inst:ga});
   }
   L.TOTAL=L.stops[L.stops.length-1].t;
-  /* polyline slice, with elapsed time distributed along track distance */
-  const a=IT.i[o], b=IT.i[e];
-  L.poly=IT.p.slice(a,b+1).map(q=>[q[0],q[1]]);
-  L.polyT=new Array(L.poly.length).fill(0);
+  /* polyline, with the running time distributed along track distance. A stop
+     lands in it twice, once at each end of its wait, so anything that reads a
+     position by interpolating holds still while the train does. */
   for(let i=o;i<e;i++){
-    const s0=IT.i[i]-a, s1=IT.i[i+1]-a, t0=L.stops[i-o].t, t1=L.stops[i-o+1].t;
+    const s0=IT.i[i], s1=IT.i[i+1], t0=L.stops[i-o].td, t1=L.stops[i-o+1].t;
     let cum=0; const dd=[0];
-    for(let j=s0;j<s1;j++){cum+=hav(L.poly[j][0],L.poly[j][1],L.poly[j+1][0],L.poly[j+1][1]);dd.push(cum);}
-    for(let j=s0;j<=s1;j++) L.polyT[j]=t0+(t1-t0)*(cum?dd[j-s0]/cum:(j-s0)/Math.max(1,s1-s0));
+    for(let j=s0;j<s1;j++){cum+=hav(IT.p[j][0],IT.p[j][1],IT.p[j+1][0],IT.p[j+1][1]);dd.push(cum);}
+    for(let j=s0;j<=s1;j++){
+      L.poly.push([IT.p[j][0],IT.p[j][1]]);
+      L.polyT.push(t0+(t1-t0)*(cum?dd[j-s0]/cum:(j-s0)/Math.max(1,s1-s0)));
+    }
   }
+  /* a stop with no wait needs only the one entry */
+  for(let j=L.poly.length-1;j>0;j--)
+    if(L.polyT[j]===L.polyT[j-1]&&L.poly[j][0]===L.poly[j-1][0]&&L.poly[j][1]===L.poly[j-1][1]){
+      L.poly.splice(j,1); L.polyT.splice(j,1);
+    }
   /* coverage sub-segments, each with a time span */
   const cv=IT.cv[carrier]; let base=0;
   for(let i=0;i<o;i++) base+=IT.sn[i];
   for(let i=o;i<e;i++){
-    const n=IT.sn[i], t0=L.stops[i-o].t, t1=L.stops[i-o+1].t;
-    for(let k=0;k<n;k++)
-      L.cov.push({t0:t0+(t1-t0)*k/n, t1:t0+(t1-t0)*(k+1)/n, st:LONG[cv[base+k]]});
+    const n=IT.sn[i], t0=L.stops[i-o].td, t1=L.stops[i-o+1].t;
+    let last="good";
+    for(let k=0;k<n;k++){
+      last=LONG[cv[base+k]];
+      L.cov.push({t0:t0+(t1-t0)*k/n, t1:t0+(t1-t0)*(k+1)/n, st:last});
+    }
+    /* standing at the platform is the same place as the moment you pulled in */
+    const nx=L.stops[i-o+1];
+    if(nx.dwell) L.cov.push({t0:nx.t,t1:nx.td,st:last});
     base+=n;
   }
   if(!L.cov.length) L.cov.push({t0:0,t1:Math.max(L.TOTAL,0.01),st:"good"});
@@ -298,8 +321,10 @@ function legHours(itIdx,o,e,car){
   if(!cv) return out;
   let base=0; for(let i=0;i<o;i++) base+=it.sn[i];
   for(let i=o;i<e;i++){
-    const n=it.sn[i], span=(it.s[i+1][1]-it.s[i][1])/60;
-    for(let k=0;k<n;k++) out[LONG[cv[base+k]]]+=span/n;
+    const dw=it.s[i+1][2]||0, n=it.sn[i], span=(it.s[i+1][1]-dw-it.s[i][1])/60;
+    let last="good";
+    for(let k=0;k<n;k++){ last=LONG[cv[base+k]]; out[last]+=span/n; }
+    out[last]+=dw/60;              /* the wait counts where the train is standing */
     base+=n;
   }
   return out;
