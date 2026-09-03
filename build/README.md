@@ -125,3 +125,17 @@ Relief on its own is worse than how tightly the track curves, and adding it on t
 buys one segment out of ninety-nine. That is inside the noise, and the full build
 would need roughly 135,000 elevation queries against a free API. The cheap proxy,
 which comes free with track geometry the feed already ships, wins.
+
+**Density-dependent carrier factors**, so that T-Mobile is penalised harder in
+empty country rather than by a flat multiplier everywhere. Fits identically, 84%
+either way. The flat multiplier already produces the behaviour, because a
+multiplier below one pushes marginal rural segments under the threshold while
+cities stay well clear of it.
+
+### Where this leaves the model
+
+Three separate additions have now failed to beat it, and the fit sits at 84%
+whatever is added. That is the resolution limit of the validation data: ninety-nine
+hand-authored judgements across one route cannot distinguish finer models, so a
+more elaborate one could not be shown to be better even if it were. Improving the
+estimate meaningfully needs more ground truth, not more parameters.
