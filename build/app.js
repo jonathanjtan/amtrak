@@ -273,14 +273,17 @@ function rebuild(){
       {maxZoom:18,attribution:"Esri, Maxar, USGS"}).addTo(lmap);
     const topo=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:18,attribution:"Esri"});
     const street=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:18,attribution:"Esri"});
-    L.control.layers({Satellite:sat,Topographic:topo,Streets:street}).addTo(lmap);
+    /* the route rides in its own group so it can be switched off to read the terrain */
+    const routeLayer=L.layerGroup().addTo(lmap);
+    L.control.layers({Satellite:sat,Topographic:topo,Streets:street},
+                     {"Route &amp; stops":routeLayer},
+                     {collapsed:window.matchMedia("(max-width:700px)").matches}).addTo(lmap);
     let warned=false;
     sat.on("tileerror",()=>{if(warned)return;warned=true;
       if(note) note.textContent="Tiles are blocked in this viewer. Open the page in a browser to see the imagery; the offline map above works everywhere.";});
-    let segs=[],marks=[],lTrain=null;
+    let segs=[],lTrain=null;
     window.__rebuildLive=function(){
-      segs.forEach(o=>lmap.removeLayer(o.pl));segs=[];
-      marks.forEach(m=>lmap.removeLayer(m));marks=[];
+      routeLayer.clearLayers(); segs=[];
       const pal=PAL[theme];
       covRuns().forEach(s=>{
         const pts=[];
@@ -288,21 +291,23 @@ function rebuild(){
         pts.push([a.lat,a.lng]);
         for(let i=0;i<LEG.poly.length;i++) if(LEG.polyT[i]>=s.t0&&LEG.polyT[i]<=s.t1) pts.push(LEG.poly[i]);
         pts.push([b.lat,b.lng]);
-        const pl=L.polyline(pts,{color:pal[s.st],weight:4,opacity:.95}).addTo(lmap);
+        const pl=L.polyline(pts,{color:pal[s.st],weight:4,opacity:.95}).addTo(routeLayer);
         segs.push({pl:pl,st:s.st});
       });
       LEG.stops.forEach((s,i)=>{
         const major=(i===0||i===LEG.stops.length-1);
-        const m=L.circleMarker([s.lat,s.lng],{radius:major?6:4,color:"#fff",weight:major?2:1.4,
-          fillColor:major?"#EAE7DE":"#9aa6b2",fillOpacity:1}).addTo(lmap).bindPopup(s.name);
-        marks.push(m);
+        L.circleMarker([s.lat,s.lng],{radius:major?6:4,color:"#fff",weight:major?2:1.4,
+          fillColor:major?"#EAE7DE":"#9aa6b2",fillOpacity:1}).addTo(routeLayer)
+          .bindPopup(s.name+"<br>"+clockAt(s.t).full);
       });
       LEG.sights.forEach(s=>{
-        const m=L.circleMarker([s.lat,s.lng],{radius:5,color:"#1fbccd",weight:2,fillColor:"#1fbccd",fillOpacity:.55})
-          .addTo(lmap).bindPopup("<b>"+s.n+"</b><br>"+lookText(s));
-        marks.push(m);
+        L.circleMarker([s.lat,s.lng],{radius:5,color:"#1fbccd",weight:2,fillColor:"#1fbccd",fillOpacity:.55})
+          .addTo(routeLayer).bindPopup("<b>"+s.n+"</b><br>"+lookText(s));
       });
-      lmap.fitBounds(L.latLngBounds(LEG.poly),{padding:[24,24]});
+      /* no animation: a queued zoom can be dropped when legs change quickly,
+         leaving the imagery parked on the previous route */
+      lmap.invalidateSize(false);
+      lmap.fitBounds(L.latLngBounds(LEG.poly),{padding:[24,24],animate:false});
     };
     window.__recolorLive=function(){const pal=PAL[theme];segs.forEach(o=>o.pl.setStyle({color:pal[o.st]}));};
     window.__onTrain=function(t){

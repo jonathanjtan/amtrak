@@ -49,8 +49,11 @@
   .mapcard{position:relative;background:var(--ink-2);border:1px solid var(--rail);border-radius:14px;padding:6px;
     transition:background .25s ease;}
   .mapviewport{overflow:hidden;border-radius:9px;}
-  svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab;user-select:none;}
-  svg.dragging{cursor:grabbing;}
+  /* Scoped to the schematic map on purpose: as a bare `svg` rule this also caught
+     Leaflet's vector overlay, collapsing it to 0x0 and hiding the route on the
+     satellite map. */
+  #map{display:block;width:100%;height:auto;touch-action:none;cursor:grab;user-select:none;}
+  #map.dragging{cursor:grabbing;}
   .zoomctl{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:2;}
   .zoomctl button{width:34px;height:34px;border-radius:8px;border:1px solid var(--rail);background:var(--ink-2);
     color:var(--paper);font-size:18px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;
