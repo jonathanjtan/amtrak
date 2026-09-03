@@ -70,8 +70,14 @@ function agTipList(t){
       add("◍",'<b>Spotty here.</b> Texts and calls mostly hold; video and big files will stall. Load anything heavy at the next town.');
     else if(d)
       add("✓",'<b>'+CN+' is usable</b> for about '+fmtDur(run.t1-t)+'. The next dead stretch starts ~'+clockAt(d.t).time+' and runs '+fmtDur(d.len)+'.');
-    else
-      add("✓",'<b>'+CN+' is usable</b> and stays that way to '+stopName(LEG.stops.length-1)+'.');
+    else{
+      /* no dead stretch left is not the same as no trouble left */
+      const sp=nextRunOf(t,"spotty");
+      add("✓",sp
+        ? ('<b>No dead stretches left</b> on '+CN+'. It goes patchy for '+fmtDur(sp.len)+
+           ' from ~'+clockAt(sp.t).time+', which holds texts and calls but not much else.')
+        : ('<b>'+CN+' is usable</b> and stays that way to '+stopName(LEG.stops.length-1)+'.'));
+    }
   }
   if(sn) add("◉",'<b>'+sn.n+', right now.</b> '+lookText(sn)+'.',true);
   else if(ns&&ns.t-t<=Math.max(0.6,LEG.TOTAL/60))

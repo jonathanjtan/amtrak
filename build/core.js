@@ -393,17 +393,11 @@ function wallBands(L){
 }
 /* Dead and spotty hours on this leg for a carrier other than the selected one,
    using the same sub-segment spans. */
-function carrierTotals(car){
-  const cv=IT.cv[car], out={good:0,spotty:0,dead:0};
-  let base=0;
-  for(let i=0;i<O;i++) base+=IT.sn[i];
-  for(let i=O;i<E;i++){
-    const n=IT.sn[i], t0=LEG.stops[i-O].t, t1=LEG.stops[i-O+1].t, span=(t1-t0)/n;
-    for(let k=0;k<n;k++) out[LONG[cv[base+k]]]+=span;
-    base+=n;
-  }
-  return out;
-}
+/* The same sum legHours does, for the leg on screen. It used to have its own
+   copy of the arithmetic, which stopped agreeing the moment waits at stations
+   were modelled: the page said Verizon was dead for 1h 49m in one sentence and
+   1h 45m in the next. One implementation now. */
+function carrierTotals(car){ return legHours(ITS.indexOf(IT),O,E,car); }
 function posAt(t,L){
   L=L||LEG; const P=L.poly,T=L.polyT;
   if(t<=T[0])return {lat:P[0][0],lng:P[0][1],i:0};
