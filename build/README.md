@@ -8,7 +8,7 @@
 - `ui.js` — timeline, coverage cards, sights, dining
 - `agenda.js` — "now happening / up next"
 - `app.js` — station-first picker, live position, shareable URL, Leaflet map
-- `style.css`, `body.html` — page shell
+- `style.css`, `body.html`, `head_extra.html` — page shell, favicon and link-preview metadata
 - `assemble.sh` — concatenates the above plus `data.json` into `index.html`
 
 ## Data
