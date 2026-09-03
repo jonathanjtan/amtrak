@@ -491,9 +491,13 @@ function fillAnchor(){
 const STORE="amtrak.leg.v1";
 function remember(){
   try{
-    localStorage.setItem(STORE,JSON.stringify({
-      r:IT.n,t:IT.tr,from:IT.s[O][0],to:IT.s[E][0],
-      on:depDate.value,c:carrier,theme:theme,dly:Math.round(DELAY*60)}));
+    /* remember the journey when there is one, so a reload comes back to the
+       trip you were planning rather than its first leg */
+    localStorage.setItem(STORE,JSON.stringify(journey
+      ? {j:1,from:journey.a,to:journey.b,on:journey.start||depDate.value,
+         c:carrier,theme:theme,dly:Math.round(DELAY*60)}
+      : {r:IT.n,t:IT.tr,from:IT.s[O][0],to:IT.s[E][0],
+         on:depDate.value,c:carrier,theme:theme,dly:Math.round(DELAY*60)}));
   }catch(e){}
 }
 function recall(){
@@ -553,6 +557,11 @@ function applySaved(){
     $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
   }
   if(!ST[v.from]||!ST[v.to]) return false;
+  if(v.j){                                  /* a saved multi-leg journey */
+    origIn.value=stopLabel(v.from); destIn.value=stopLabel(v.to);
+    repick();
+    return !!LEG;
+  }
   let idx=-1;
   ITS.forEach((it,i)=>{
     if(it.n!==v.r) return;
