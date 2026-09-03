@@ -2091,6 +2091,12 @@ function rebuild(){
   ITS.forEach(i=>i.s.forEach(s=>stops.add(s[0])));
   el.textContent=ITS.length+" itineraries across "+routes.size+" routes and "+stops.size+" stations";
 })();
+/* open on the California Zephyr, the route this page started as */
+function openDefault(){
+  origIn.value=stopLabel("EMY"); destIn.value=stopLabel("CHI");
+  const z=ITS.findIndex(it=>it.n==="California Zephyr"&&it.s[0][0]==="EMY");
+  repick(z<0?undefined:z);
+}
 (function init(){
   document.documentElement.dataset.theme=theme;
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
@@ -2106,11 +2112,11 @@ function rebuild(){
   }else if(applySaved()){
     /* restored from last visit */
   }else{
-    /* open on the California Zephyr, the route this page started as */
-    origIn.value=stopLabel("EMY"); destIn.value=stopLabel("CHI");
-    const z=ITS.findIndex(it=>it.n==="California Zephyr"&&it.s[0][0]==="EMY");
-    repick(z<0?undefined:z);
+    openDefault();
   }
+  /* a link can ask for something unusable, such as the same station twice;
+     the message stands but the page still needs a leg on it */
+  if(!LEG){ const msg=pkMsg.innerHTML; openDefault(); pkMsg.innerHTML=msg; }
   setLiveMode();
 })();
 
