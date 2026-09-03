@@ -277,6 +277,7 @@ function updateTrain(){
   const t=computeTNow();
   if(window.__onTrain)window.__onTrain(t);
   updateAgenda(t);
+  moveNowLine(t);
   if(!trainG) return;
   if(t===null){trainG.style.display="none";liveStatus.textContent="set a date";return;}
   if(t<-0.001){trainG.style.display="none";liveStatus.textContent="departs in "+fmtDur(-t);

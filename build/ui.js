@@ -46,6 +46,14 @@ function drawTimeline(){
   });
   refreshTimes();
 }
+/* Where you are, on the same axis as everything else */
+function moveNowLine(t){
+  const el=$("nowLine");
+  if(t===null||!isFinite(t)||t<0||t>LEG.TOTAL){el.hidden=true;return;}
+  el.hidden=false;
+  el.style.left=pct(t)+"%";
+  $("nowTag").textContent=fmtDur(t)+" in";
+}
 function refreshTimes(){
   [...axis.children].forEach(d=>{
     const c=clockAt(LEG.stops[d.__i].t);
