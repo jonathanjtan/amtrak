@@ -257,6 +257,22 @@
   .ctl-right{display:flex;gap:8px;flex-wrap:wrap;}
   .pk-msg{font-size:12px;color:var(--spotty);margin:0 0 14px;min-height:1.1em;line-height:1.4;}
   .pk-msg:empty{margin-bottom:6px;}
+  .connect{display:flex;flex-direction:column;gap:7px;margin:9px 0 2px;}
+  .cx{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+  .cx-via{font-size:12px;color:var(--paper);font-weight:600;min-width:8.5em;}
+  .cx-tot{font-size:11px;color:var(--muted);min-width:7em;}
+  .cx-leg{appearance:none;background:var(--ink-2);border:1px solid var(--rail);color:var(--chrome);
+    border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:border-color .15s,color .15s;}
+  .cx-leg:hover{border-color:var(--focus);color:var(--paper);}
+  .cx-leg.on{background:var(--sel);color:var(--sel-ink);border-color:var(--sel);}
+  .cx-leg.on b{background:var(--sel-ink);color:var(--sel);}
+  .cx-leg.on .mono{color:var(--sel-ink);opacity:.75;}
+  .cx-leg:focus-visible{outline:2px solid var(--focus);outline-offset:1px;}
+  .cx-leg b{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;color:var(--sel-ink);
+    background:var(--chrome);border-radius:3px;padding:1px 4px;font-weight:700;}
+  .cx-leg .mono{color:var(--muted);font-size:11px;}
+  @media (max-width:620px){.cx-via,.cx-tot{min-width:0;}.cx{gap:5px;}}
   .town-dot{fill:var(--muted);opacity:.75;}
   .town-lbl{fill:var(--muted);font-family:ui-monospace,Menlo,monospace;opacity:.9;}
   .st-dot{fill:var(--chrome);stroke:var(--ink);stroke-width:.7;vector-effect:non-scaling-stroke;}
@@ -275,7 +291,7 @@
   <p class="eyebrow" id="legEyebrow">Amtrak · where your signal goes dark</p>
   <h1 id="legTitle">California Zephyr</h1>
   <p class="sub" id="legSub"></p>
-  <p class="tagline">Name any two stations on one Amtrak route. This maps where cellular holds up and where it dies along the way, what is out the window, when the dining car opens, and what to do before the bars disappear.</p>
+  <p class="tagline">Name any two stations on the Amtrak network. This maps where cellular holds up and where it dies along the way, what is out the window, when the dining car opens, and what to do before the bars disappear. A journey no single train covers is split into legs you can step through.</p>
 
   <div class="picker">
     <label class="pk"><span>From</span><input id="origIn" list="allStops" autocomplete="off" placeholder="any station"></label>
@@ -1140,6 +1156,139 @@ function servicesFor(a,b){
   out.sort((x,y)=>x.mins-y.mins);
   return out;
 }
+/* Journeys no single train covers. Finds interchange stations served by one
+   service from the origin and another to the destination, cheapest total time
+   first, and falls back to two changes when one will not do. */
+const MIN_CONNECT=30;                     /* minutes; anything tighter is not a plan */
+function reachMaps(a,b){
+  const fromA=new Map(), toB=new Map();
+  ITS.forEach((it,i)=>{
+    const codes=it.s.map(x=>x[0]);
+    const ia=codes.indexOf(a);
+    if(ia>=0) for(let j=ia+1;j<codes.length;j++){
+      const m=it.s[j][1]-it.s[ia][1], cur=fromA.get(codes[j]);
+      if(m>0&&(!cur||m<cur.mins)) fromA.set(codes[j],{mins:m,i:i,o:ia,e:j});
+    }
+    const ib=codes.lastIndexOf(b);
+    if(ib>0) for(let j=0;j<ib;j++){
+      const m=it.s[ib][1]-it.s[j][1], cur=toB.get(codes[j]);
+      if(m>0&&(!cur||m<cur.mins)) toB.set(codes[j],{mins:m,i:i,o:j,e:ib});
+    }
+  });
+  return {fromA:fromA,toB:toB};
+}
+/* the same pair of trains changing at neighbouring towns is one option, not three */
+function dedupe(list,n){
+  const seen=new Set(), keep=[];
+  for(const c of list){
+    const k=c.legs.map(l=>ITS[l.i].n).join("|");
+    if(seen.has(k)) continue;
+    seen.add(k); keep.push(c);
+    if(keep.length===n) break;
+  }
+  return keep;
+}
+function connectionsFor(a,b){
+  const {fromA,toB}=reachMaps(a,b);
+  const one=[];
+  fromA.forEach((v,x)=>{
+    if(x===a||x===b) return;
+    const w=toB.get(x);
+    if(!w||v.i===w.i) return;
+    one.push({vias:[x],legs:[v,w],total:v.mins+w.mins+MIN_CONNECT});
+  });
+  if(one.length){ one.sort((p,q)=>p.total-q.total); return dedupe(one,3); }
+  /* nothing direct enough: allow a middle train between two interchanges */
+  const two=[];
+  ITS.forEach((it,i)=>{
+    const codes=it.s.map(x=>x[0]);
+    let best=null;
+    for(let p=0;p<codes.length;p++){
+      const v=fromA.get(codes[p]);
+      if(!v||v.i===i||codes[p]===a||codes[p]===b) continue;
+      for(let q=p+1;q<codes.length;q++){
+        const w=toB.get(codes[q]);
+        if(!w||w.i===i||codes[q]===b) continue;
+        const mid=it.s[q][1]-it.s[p][1];
+        if(mid<=0) continue;
+        const tot=v.mins+mid+w.mins+2*MIN_CONNECT;
+        if(!best||tot<best.total)
+          best={vias:[codes[p],codes[q]],legs:[v,{mins:mid,i:i,o:p,e:q},w],total:tot};
+      }
+    }
+    if(best) two.push(best);
+  });
+  two.sort((p,q)=>p.total-q.total);
+  return dedupe(two,2);
+}
+let journey=null;                          /* a multi-leg journey being explored */
+function showConnections(a,b){
+  const list=connectionsFor(a,b);
+  if(!list.length){
+    journey=null;
+    pkMsg.textContent=deadEndMessage(a,b);
+    return;
+  }
+  journey={a:a,b:b,list:list,pick:0,leg:1};
+  drawJourney();
+  loadLeg(list[0].legs[0]);                /* show the first leg rather than nothing */
+}
+/* Say why, when there is a why. Usually one line ends somewhere nothing else
+   calls at, which is worth knowing before you go looking for a connection. */
+function deadEndMessage(a,b){
+  const {fromA}=reachMaps(a,b);
+  const generic="No Amtrak route in the feed joins "+shortName(stationName(a))+" and "+
+                shortName(stationName(b))+" in under three changes.";
+  if(!fromA.size) return generic;
+  let far=null;
+  fromA.forEach((v,x)=>{ if(!far||v.mins>far.mins) far={code:x,mins:v.mins}; });
+  /* does anything leave the far end for somewhere new? the same line running back
+     the way you came does not count */
+  const onward=ITS.some(it=>{
+    const c=it.s.map(x=>x[0]), i=c.indexOf(far.code);
+    if(i<0) return false;
+    for(let j=i+1;j<c.length;j++) if(c[j]!==a&&!fromA.has(c[j])) return true;
+    return false;
+  });
+  if(onward) return generic;
+  return "Trains out of "+shortName(stationName(a))+" reach as far as "+stationName(far.code)+
+         ", and no Amtrak route continues from there. Reaching "+shortName(stationName(b))+
+         " means changing stations by some other means, which breaks the journey in two.";
+}
+function drawJourney(){
+  if(!journey) return;
+  const J=journey, n=J.list[J.pick].legs.length;
+  pkMsg.innerHTML="";
+  const head=document.createElement("span");
+  head.innerHTML=shortName(stationName(J.a))+" → "+shortName(stationName(J.b))+
+    " needs "+(n-1===1?"one change":(n-1)+" changes")+". Showing <b>leg "+J.leg+" of "+n+"</b>.";
+  pkMsg.appendChild(head);
+  const box=document.createElement("div"); box.className="connect";
+  J.list.forEach((c,ci)=>{
+    const row=document.createElement("div"); row.className="cx";
+    row.innerHTML='<span class="cx-via">via '+c.vias.map(v=>shortName(stationName(v))).join(", ")+'</span>'+
+      '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total</span>';
+    c.legs.forEach((leg,li)=>{
+      const btn=document.createElement("button");
+      btn.type="button";
+      const on=(ci===J.pick&&li+1===J.leg);
+      btn.className="cx-leg"+(on?" on":"");
+      btn.setAttribute("aria-pressed",String(on));
+      btn.innerHTML='<b>'+(li+1)+'</b> '+ITS[leg.i].n+' <span class="mono">'+fmtDur(leg.mins/60)+'</span>';
+      btn.addEventListener("click",()=>{J.pick=ci;J.leg=li+1;drawJourney();loadLeg(leg);});
+      row.appendChild(btn);
+    });
+    box.appendChild(row);
+  });
+  pkMsg.appendChild(box);
+}
+function loadLeg(c){
+  IT=ITS[c.i]; O=c.o; E=c.e;
+  origIn.value=stopLabel(IT.s[O][0]); destIn.value=stopLabel(IT.s[E][0]);
+  const list=servicesFor(IT.s[O][0],IT.s[E][0]).filter(x=>x.e>x.o&&x.mins>0);
+  if(list.length) fillRouteSel(list,c.i+":"+c.o+":"+c.e);
+  applyChoice();
+}
 function fillRouteSel(list,keep){
   routeSel.innerHTML="";
   list.forEach(c=>{
@@ -1154,6 +1303,7 @@ function fillRouteSel(list,keep){
 }
 function applyChoice(){
   const p=routeSel.value.split(":").map(Number);
+  if(!p.length||isNaN(p[0])) return;
   IT=ITS[p[0]];O=p[1];E=p[2];
   fromCode=IT.s[O][0];toCode=IT.s[E][0];
   origIn.value=stopLabel(fromCode);destIn.value=stopLabel(toCode);
@@ -1165,12 +1315,11 @@ function repick(preferIdx){
   if(b&&b===a){pkMsg.textContent="Pick two different stations.";return;}
   const list=servicesFor(a,b||null).filter(c=>c.e>c.o&&c.mins>0);
   if(!list.length){
-    pkMsg.textContent=b
-      ? ("No single Amtrak route runs "+shortName(stationName(a))+" → "+shortName(stationName(b))+
-         ". That journey needs a connection, so pick one leg of it.")
-      : (shortName(stationName(a))+" is the end of the line on every route serving it. Name a destination, or start somewhere else.");
+    if(b) showConnections(a,b);
+    else pkMsg.textContent=shortName(stationName(a))+" is the end of the line on every route serving it. Name a destination, or start somewhere else.";
     return;
   }
+  journey=null;
   pkMsg.textContent=list.length>1?(list.length+" services run this, quickest first."):"";
   let keep=null;
   if(preferIdx!==undefined){const m=list.find(c=>c.i===preferIdx); if(m) keep=m.i+":"+m.o+":"+m.e;}
