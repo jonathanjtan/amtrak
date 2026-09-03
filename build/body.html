@@ -1,24 +1,24 @@
 <div class="wrap">
   <p class="eyebrow" id="legEyebrow">Amtrak · where your signal goes dark</p>
   <h1 id="legTitle">California Zephyr</h1>
-  <p class="sub" id="legSub"></p>
+  <p class="sub" id="legSub" aria-live="polite"></p>
   <p class="tagline">Name any two stations on the Amtrak network. This maps where cellular holds up and where it dies along the way, what is out the window, when the dining car opens, and what to do before the bars disappear. A journey no single train covers is split into legs you can step through.</p>
 
   <div class="picker">
-    <label class="pk"><span>From</span><input id="origIn" list="allStops" autocomplete="off" placeholder="any station"></label>
+    <label class="pk"><span>From</span><input id="origIn" list="allStops" autocomplete="off" placeholder="any station" aria-label="Departure station"></label>
     <label class="pk pk-swap"><span>&nbsp;</span><button id="swapBtn" class="iconbtn" type="button" title="Reverse direction" aria-label="Reverse direction">⇄<span class="swap-txt"> Reverse</span></button></label>
-    <label class="pk"><span>To</span><input id="destIn" list="allStops" autocomplete="off" placeholder="any station"></label>
-    <label class="pk"><span>Service</span><select id="routeSel"></select></label>
-    <label class="pk"><span>Date</span><input type="date" id="depDate"></label>
+    <label class="pk"><span>To</span><input id="destIn" list="allStops" autocomplete="off" placeholder="any station" aria-label="Destination station"></label>
+    <label class="pk"><span>Service</span><select id="routeSel" aria-label="Service"></select></label>
+    <label class="pk"><span>Date</span><input type="date" id="depDate" aria-label="Date of travel"></label>
   </div>
-  <p class="pk-msg" id="pkMsg"></p>
+  <p class="pk-msg" id="pkMsg" role="status" aria-live="polite"></p>
   <datalist id="allStops"></datalist>
 
   <div class="controls">
-    <div class="seg" id="carrierCtl" role="group" aria-label="Choose carrier">
-      <button data-carrier="verizon" class="on">Verizon</button>
-      <button data-carrier="att">AT&amp;T</button>
-      <button data-carrier="tmobile">T-Mobile</button>
+    <div class="seg" id="carrierCtl" role="group" aria-label="Carrier">
+      <button data-carrier="verizon" class="on" aria-pressed="true">Verizon</button>
+      <button data-carrier="att" aria-pressed="false">AT&amp;T</button>
+      <button data-carrier="tmobile" aria-pressed="false">T-Mobile</button>
     </div>
     <span class="ctl-right">
       <button id="copyBtn" class="iconbtn" type="button">⎘ Copy link</button>

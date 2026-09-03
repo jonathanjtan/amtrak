@@ -233,7 +233,10 @@ $("swapBtn").addEventListener("click",()=>{
 document.getElementById("carrierCtl").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
   carrier=b.dataset.carrier;
-  [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));
+  [...e.currentTarget.children].forEach(x=>{
+    x.classList.toggle("on",x===b);
+    x.setAttribute("aria-pressed",String(x===b));
+  });
   rebuild();
 });
 $("copyBtn").addEventListener("click",()=>{
@@ -414,6 +417,14 @@ function rebuild(){
     let warned=false;
     sat.on("tileerror",()=>{if(warned)return;warned=true;
       if(note) note.textContent="Tiles are blocked in this viewer. Open the page in a browser to see the imagery; the offline map above works everywhere.";});
+    /* Leaflet's layer control puts its text in a sibling span, so the inputs
+       themselves announce as "on"; name them from that text. */
+    setTimeout(()=>{
+      document.querySelectorAll("#live-map .leaflet-control-layers input").forEach(inp=>{
+        const t=(inp.parentElement&&inp.parentElement.textContent||"").trim();
+        if(t) inp.setAttribute("aria-label",t);
+      });
+    },0);
     let segs=[],lTrain=null;
     window.__rebuildLive=function(){
       routeLayer.clearLayers(); segs=[];

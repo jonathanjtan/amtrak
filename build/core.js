@@ -18,7 +18,9 @@ const NAME_FIX={NYP:"New York Penn Station",BOS:"Boston South Station",BBY:"Bost
 const ALIAS={NYP:"nyc new york city penn moynihan",WAS:"dc washington",LAX:"los angeles la union",
   CHI:"chicago union",EMY:"emeryville san francisco bay",SFC:"san francisco",PDX:"portland oregon",
   POR:"portland maine",SEA:"seattle king street",NOL:"new orleans"};
-const stationName=c=>NAME_FIX[c]||ST[c][0];
+/* the feed title-cases crudely: Mccook, Ny State Fair */
+const tidy=n=>n.replace(/\bMc([a-z])/g,(m,x)=>"Mc"+x.toUpperCase()).replace(/^Ny /,"New York ");
+const stationName=c=>NAME_FIX[c]||tidy(ST[c][0]);
 const stopLabel=c=>stationName(c)+(ST[c][4]?", "+ST[c][4]:"")+" ("+c+")";
 const searchKey=c=>(stationName(c)+" "+(ST[c][4]||"")+" "+c+" "+(ALIAS[c]||"")).toLowerCase();
 
