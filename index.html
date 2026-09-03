@@ -768,6 +768,21 @@ function buildLeg(){
   L.km=0; for(let i=o;i<e;i++) L.km+=IT.kl[i];
   return L;
 }
+/* Hours in each coverage state on an arbitrary leg, without building the leg.
+   The sub-segments between two stops share that hop's running time evenly, so
+   the totals fall out of the timetable and the coverage string alone — cheap
+   enough to run over every leg of every journey option while you pick one. */
+function legHours(itIdx,o,e,car){
+  const it=ITS[itIdx], cv=it.cv[car||carrier], out={good:0,spotty:0,dead:0};
+  if(!cv) return out;
+  let base=0; for(let i=0;i<o;i++) base+=it.sn[i];
+  for(let i=o;i<e;i++){
+    const n=it.sn[i], span=(it.s[i+1][1]-it.s[i][1])/60;
+    for(let k=0;k<n;k++) out[LONG[cv[base+k]]]+=span/n;
+    base+=n;
+  }
+  return out;
+}
 /* adjacent sub-segments of the same status, merged — the fine grid is for lookups,
    the runs are what gets drawn */
 function covRuns(){
@@ -1720,9 +1735,14 @@ function drawJourney(){
   J.list.forEach((c,ci)=>{
     const row=document.createElement("div"); row.className="cx";
     const waitTxt=(c.waits||[]).map(w=>fmtDur(w/60)).join(" + ");
+    /* Two ways round often differ more in signal than in hours, and that is
+       worth knowing before you pick one. Riding time only: the waits are spent
+       at a station, where there is usually a mast. */
+    const dead=c.legs.reduce((a,l)=>a+legHours(l.i,l.o,l.e,carrier).dead,0);
     row.innerHTML='<span class="cx-via">via '+c.vias.map(place).join(", ")+'</span>'+
       '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+
-      (journeyArrival(c)?", in "+journeyArrival(c):"")+'</span>';
+      (journeyArrival(c)?", in "+journeyArrival(c):"")+
+      (dead>=0.25?", "+fmtDur(dead)+" off the network":", signal throughout")+'</span>';
     c.legs.forEach((leg,li)=>{
       const btn=document.createElement("button");
       btn.type="button";
@@ -1838,6 +1858,7 @@ document.getElementById("carrierCtl").addEventListener("click",e=>{
     x.setAttribute("aria-pressed",String(x===b));
   });
   rebuild();
+  drawJourney();      /* the dead time on each journey option is carrier-specific */
 });
 $("copyBtn").addEventListener("click",()=>{
   const b=$("copyBtn"), url=location.href;

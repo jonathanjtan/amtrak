@@ -213,9 +213,14 @@ function drawJourney(){
   J.list.forEach((c,ci)=>{
     const row=document.createElement("div"); row.className="cx";
     const waitTxt=(c.waits||[]).map(w=>fmtDur(w/60)).join(" + ");
+    /* Two ways round often differ more in signal than in hours, and that is
+       worth knowing before you pick one. Riding time only: the waits are spent
+       at a station, where there is usually a mast. */
+    const dead=c.legs.reduce((a,l)=>a+legHours(l.i,l.o,l.e,carrier).dead,0);
     row.innerHTML='<span class="cx-via">via '+c.vias.map(place).join(", ")+'</span>'+
       '<span class="cx-tot mono">'+fmtDur(c.total/60)+' total'+(waitTxt?", "+waitTxt+" waiting":"")+
-      (journeyArrival(c)?", in "+journeyArrival(c):"")+'</span>';
+      (journeyArrival(c)?", in "+journeyArrival(c):"")+
+      (dead>=0.25?", "+fmtDur(dead)+" off the network":", signal throughout")+'</span>';
     c.legs.forEach((leg,li)=>{
       const btn=document.createElement("button");
       btn.type="button";
@@ -331,6 +336,7 @@ document.getElementById("carrierCtl").addEventListener("click",e=>{
     x.setAttribute("aria-pressed",String(x===b));
   });
   rebuild();
+  drawJourney();      /* the dead time on each journey option is carrier-specific */
 });
 $("copyBtn").addEventListener("click",()=>{
   const b=$("copyBtn"), url=location.href;
