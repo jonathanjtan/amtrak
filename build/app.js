@@ -155,7 +155,7 @@ function connectionsFor(a,b){
       for(let q=p+1;q<codes.length;q++){
         const w=toB.get(codes[q]);
         if(!w||w.i===i||codes[q]===b) continue;
-        const mid=it.s[q][1]-it.s[p][1];
+        const mid=rideMins(it,p,q);        /* you leave p and get off at q, as on any other leg */
         if(mid<=0) continue;
         const cand=withWaits([codes[p],codes[q]],[v,{mins:mid,i:i,o:p,e:q},w]);
         if(!best||cand.total<best.total) best=cand;
@@ -533,8 +533,8 @@ function applyDelay(h){
   const mins=Math.round(h*60),dv=$("delayVal");
   if(mins===0) dv.textContent="On schedule";
   else if(mins<0) dv.textContent="~"+(-mins)+" min early";
-  else{const H=Math.floor(mins/60),M=mins%60;
-    dv.textContent="~"+(H?H+"h ":"")+M+"m late · in "+LEG.stops[LEG.stops.length-1].short+" ~"+clockAt(LEG.TOTAL).time;}
+  /* the same duration format as everywhere else: 1h 05m, not 1h 5m */
+  else dv.textContent="~"+fmtDur(mins/60)+" late · in "+LEG.stops[LEG.stops.length-1].short+" ~"+clockAt(LEG.TOTAL).time;
   /* everything that prints a clock time or counts a meal has to follow the delay,
      not just the strip */
   wallBands(LEG);
