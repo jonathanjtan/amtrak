@@ -515,9 +515,16 @@ function writeURL(){
      The page has to keep working there, so a failed URL update is not fatal. */
   try{
   const q=new URLSearchParams();
-  q.set("t",IT.tr||"");q.set("r",IT.n);
-  q.set("from",IT.s[O][0]);q.set("to",IT.s[E][0]);
-  if(depDate.value)q.set("on",depDate.value);
+  /* while a journey is being explored, share the journey rather than whichever
+     leg happens to be on screen */
+  if(journey){
+    q.set("from",journey.a); q.set("to",journey.b);
+    if(journey.start) q.set("on",journey.start);
+  }else{
+    q.set("t",IT.tr||"");q.set("r",IT.n);
+    q.set("from",IT.s[O][0]);q.set("to",IT.s[E][0]);
+    if(depDate.value)q.set("on",depDate.value);
+  }
   if(carrier!=="verizon")q.set("c",carrier);
   history.replaceState(null,"",location.pathname+"?"+q.toString());
   }catch(e){}
@@ -565,7 +572,8 @@ function readURL(){
   const c=q.get("c");
   if(c&&CARRIER_NAME[c]){carrier=c;
     [...$("carrierCtl").children].forEach(b=>b.classList.toggle("on",b.dataset.carrier===c));}
-  if(!r||!from||!to) return -1;
+  if(!from||!to) return -1;
+  if(!ST[from]||!ST[to]) return -1;
   let best=-1;
   ITS.forEach((it,i)=>{
     if(it.n!==r) return;
@@ -573,7 +581,8 @@ function readURL(){
     if(a<0||b<0||b<=a) return;
     if(best<0||(tr&&it.tr===tr)) best=i;
   });
-  if(best<0) return -1;
+  /* no single train covers it: hand the pair back so the journey planner runs */
+  if(best<0) return {journey:true,from:from,to:to};
   const codes=ITS[best].s.map(x=>x[0]);
   return {i:best,o:codes.indexOf(from),e:codes.indexOf(to)};
   }catch(e){ return -1; }
@@ -619,7 +628,10 @@ function rebuild(){
   $("themeBtn").textContent=theme==="dark"?"☀ Light":"☾ Dark";
   depDate.value=todayStr();
   const fromURL=readURL();
-  if(fromURL!==-1){
+  if(fromURL!==-1&&fromURL.journey){
+    origIn.value=stopLabel(fromURL.from); destIn.value=stopLabel(fromURL.to);
+    repick();
+  }else if(fromURL!==-1){
     origIn.value=stopLabel(ITS[fromURL.i].s[fromURL.o][0]);
     destIn.value=stopLabel(ITS[fromURL.i].s[fromURL.e][0]);
     repick(fromURL.i);
