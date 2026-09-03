@@ -251,12 +251,16 @@ function buildLeg(){
      still on the platform, and took the coverage, the scenery and the darkness
      with it. So each stop carries an arrival and a departure, and travel happens
      between one departure and the next arrival. */
+  /* The waits at both ends belong to the train's day, not to your leg: you board
+     at the origin's departure and step off at the destination's arrival. This
+     matters on any leg that is not the whole run — El Paso sits for 25 minutes
+     mid-route, and those minutes were being added to an Alpine–El Paso trip. */
   const atArr=i=>agencyInstant(start.date,depMin+stops[i][1]-(i===o?0:(stops[i][2]||0)));
   const L={stops:[],poly:[],polyT:[],cov:[],dep:inst,TOTAL:0};
   for(let i=o;i<=e;i++){
-    const c=stops[i][0], s=ST[c], gd=at(i), ga=atArr(i);
+    const c=stops[i][0], s=ST[c], ga=atArr(i), off=(i===e), gd=off?ga:at(i);
     L.stops.push({code:c,name:stationName(c),short:place(c),lat:s[1],lng:s[2],tz:TZ[s[3]],
-                  dwell:(i===o)?0:(stops[i][2]||0),   /* you board at the origin; its wait is not yours */
+                  dwell:(i===o||off)?0:(stops[i][2]||0),
                   t:(ga-inst)/3600000, td:(gd-inst)/3600000, inst:ga});
   }
   L.TOTAL=L.stops[L.stops.length-1].t;
@@ -339,7 +343,7 @@ function legHours(itIdx,o,e,car){
     const dw=it.s[i+1][2]||0, n=it.sn[i], span=(it.s[i+1][1]-dw-it.s[i][1])/60;
     let last="good";
     for(let k=0;k<n;k++){ last=LONG[cv[base+k]]; out[last]+=span/n; }
-    out[last]+=dw/60;              /* the wait counts where the train is standing */
+    if(i+1<e) out[last]+=dw/60;    /* standing time counts, except where you get off */
     base+=n;
   }
   return out;
