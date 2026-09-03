@@ -1,5 +1,7 @@
-import csv,collections,json,math,sys
-P=json.load(open("cov_params.json")); geo=json.load(open("geo_raw.json"))
+import csv,collections,json,math,sys,os
+HERE=os.path.dirname(os.path.abspath(__file__))
+_params="cov_params.json" if os.path.exists("cov_params.json") else os.path.join(HERE,"cov_params.json")
+P=json.load(open(_params)); geo=json.load(open("geo_raw.json"))
 R=json.load(open("routes_raw.json"))
 stops={s["stop_id"]:s for s in csv.DictReader(open("gtfs/stops.txt"))}
 sh=collections.defaultdict(list)

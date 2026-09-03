@@ -21,12 +21,20 @@
 
 Download those into a working directory, then:
 
+Unpack the GTFS zip into `gtfs/` beside the other two, then, from that
+directory:
+
 ```bash
-python3 build_pat.py    # GTFS -> routes_raw.json
-python3 build_geo.py    # boundaries + cities -> geo_raw.json
-python3 build_all.py    # -> data.json
-./assemble.sh           # -> index.html
+python3 /path/to/repo/build/build_pat.py   # GTFS -> routes_raw.json
+python3 /path/to/repo/build/build_geo.py   # boundaries + cities -> geo_raw.json
+python3 /path/to/repo/build/build_all.py   # -> data.json
+/path/to/repo/build/assemble.sh data.json  # -> index.html at the repo root
 ```
+
+The scripts read their inputs from the working directory and write their
+outputs there; only `assemble.sh` touches the repository, and it takes the
+path to `data.json`. Nothing has a path baked into it, so the tree can live
+anywhere.
 
 Running days come from `calendar.txt`, unioned across every trip sharing a
 terminal pair, so the Sunset Limited reads Mon/Wed/Sat westbound and Wed/Fri/Sun
@@ -70,7 +78,7 @@ strength = (nearest-town reach + density floor) / terrain penalty
 - Three long tunnels (Moffat, Cascade, Flathead) are marked by hand, because a
   10 km bore is invisible at 25 km sub-segment resolution.
 
-`tune3.py` re-fits the parameters against the hand-authored, rider-reported
+`tune3.py` (run the same way) re-fits the parameters against the hand-authored, rider-reported
 California Zephyr arrays from the first version of this page, which are preserved
 in git at `1be12e7:index.html`. Current fit: **84%** agreement at station-segment
 midpoints, and **76%** when sub-segments are collapsed to one status per station

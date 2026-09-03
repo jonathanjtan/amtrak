@@ -1,4 +1,4 @@
-import json,math,csv,re,collections
+import json,math,csv,re,os,collections
 geo=json.load(open("geo_raw.json"))
 GRID={}
 for lat,lng,pop,nm in geo["cities"]: GRID.setdefault((int(lat),int(lng)),[]).append((lat,lng,pop))
@@ -11,7 +11,8 @@ for r in csv.DictReader(open("gtfs/shapes.txt")):
 pts=[(a,b) for _,a,b in sorted(sh)]
 import subprocess
 # the hand-authored coverage this model is fitted against lives in git history
-src=subprocess.run(["git","-C","/Users/jtan/Workspace/amtrak","show","1be12e7:index.html"],
+REPO=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+src=subprocess.run(["git","-C",REPO,"show","1be12e7:index.html"],
                    capture_output=True,text=True).stdout
 orig=re.findall(r'\{c:"(\w+)",lng:(-?[\d.]+),lat:([\d.]+)',src)
 m=re.search(r'const covByCarrier=\{(.*?)\n\};',src,re.S).group(1)
