@@ -75,9 +75,11 @@ const startWeekday=()=>{
 /* Walk the legs in order from a starting weekday, returning each wait. */
 function chainWaits(legs){
   let wd=startWeekday(), clock=clockMin(ITS[legs[0].i],legs[0].o), waits=[];
+  let dayOff=0, offsets=[0];
   for(let n=0;n<legs.length;n++){
     const leg=legs[n];
     const arrAbs=clock+leg.mins;
+    dayOff+=Math.floor(arrAbs/1440);
     wd=(wd+Math.floor(arrAbs/1440))%7;
     clock=((arrAbs%1440)+1440)%1440;
     const next=legs[n+1];
@@ -92,15 +94,17 @@ function chainWaits(legs){
     if(w===null) w=7*1440;                 /* nothing within a week; treat as unusable */
     waits.push(w);
     const abs=clock+w;
+    dayOff+=Math.floor(abs/1440);
     wd=(wd+Math.floor(abs/1440))%7;
     clock=((abs%1440)+1440)%1440;
+    offsets.push(dayOff);
   }
-  return waits;
+  return {waits:waits,offsets:offsets};
 }
 function withWaits(vias,legs){
-  const waits=chainWaits(legs);
+  const {waits,offsets}=chainWaits(legs);
   const total=legs.reduce((a,l)=>a+l.mins,0)+waits.reduce((a,w)=>a+w,0);
-  return {vias:vias,legs:legs,waits:waits,total:total};
+  return {vias:vias,legs:legs,waits:waits,offsets:offsets,total:total};
 }
 /* Everywhere reachable from a in one train, and everywhere from which b is
    reachable in one; the interchanges are the overlap. */
@@ -172,9 +176,9 @@ function showConnections(a,b){
     pkMsg.textContent=deadEndMessage(a,b);
     return;
   }
-  journey={a:a,b:b,list:list,pick:0,leg:1};
+  journey={a:a,b:b,list:list,pick:0,leg:1,start:depDate.value};
   drawJourney();
-  loadLeg(list[0].legs[0]);                /* show the first leg rather than nothing */
+  loadLeg(list[0].legs[0],0);                /* show the first leg rather than nothing */
 }
 /* Say why, when there is a why. Usually one line ends somewhere nothing else
    calls at, which is worth knowing before you go looking for a connection. */
@@ -219,14 +223,21 @@ function drawJourney(){
       btn.className="cx-leg"+(on?" on":"");
       btn.setAttribute("aria-pressed",String(on));
       btn.innerHTML='<b>'+(li+1)+'</b> '+ITS[leg.i].n+' <span class="mono">'+fmtDur(leg.mins/60)+'</span>';
-      btn.addEventListener("click",()=>{J.pick=ci;J.leg=li+1;drawJourney();loadLeg(leg);});
+      btn.addEventListener("click",()=>{J.pick=ci;J.leg=li+1;drawJourney();
+        loadLeg(leg,(c.offsets&&c.offsets[li])||0);});
       row.appendChild(btn);
     });
     box.appendChild(row);
   });
   pkMsg.appendChild(box);
 }
-function loadLeg(c){
+function loadLeg(c,dayOffset){
+  /* leg two of a journey departs after the ride and the wait, not on the day
+     you set for leg one */
+  if(journey&&journey.start&&dayOffset)
+    depDate.value=shiftDate(journey.start,dayOffset);
+  else if(journey&&journey.start)
+    depDate.value=journey.start;
   IT=ITS[c.i]; O=c.o; E=c.e;
   origIn.value=stopLabel(IT.s[O][0]); destIn.value=stopLabel(IT.s[E][0]);
   const list=servicesFor(IT.s[O][0],IT.s[E][0]).filter(x=>x.e>x.o&&x.mins>0);
