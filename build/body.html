@@ -1,0 +1,117 @@
+<div class="wrap">
+  <p class="eyebrow" id="legEyebrow">Amtrak · pick any two stops</p>
+  <h1 id="legTitle">California Zephyr</h1>
+  <p class="sub" id="legSub"></p>
+
+  <div class="picker">
+    <label class="pk"><span>Route</span><select id="routeSel"></select></label>
+    <label class="pk"><span>From</span><select id="origSel"></select></label>
+    <label class="pk pk-swap"><span>&nbsp;</span><button id="swapBtn" class="iconbtn" type="button" title="Reverse direction">⇄</button></label>
+    <label class="pk"><span>To</span><select id="destSel"></select></label>
+    <label class="pk"><span>Date</span><input type="date" id="depDate"></label>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="carrierCtl" role="group" aria-label="Choose carrier">
+      <button data-carrier="verizon" class="on">Verizon</button>
+      <button data-carrier="att">AT&amp;T</button>
+      <button data-carrier="tmobile">T-Mobile</button>
+    </div>
+    <button id="themeBtn" class="iconbtn" aria-label="Toggle light or dark theme">☀ Light</button>
+  </div>
+
+  <div class="legend">
+    <span class="key"><span class="swatch" style="background:var(--good)"></span><span class="txt"><b>Good</b> signal</span></span>
+    <span class="key"><span class="swatch" style="background:var(--spotty)"></span><span class="txt"><b>Spotty</b>: gaps between towns</span></span>
+    <span class="key"><span class="swatch" style="background:var(--dead)"></span><span class="txt"><b>Dead zone</b>: expect no service</span></span>
+    <span class="key night"><span class="swatch"></span><span class="txt">Dark outside</span></span>
+  </div>
+
+  <div class="sec-label">The route</div>
+  <div class="mapcard">
+    <div class="mapviewport">
+      <svg id="map" viewBox="0 0 1000 430" role="img" aria-label="Map of the selected Amtrak leg, colored by cellular coverage"><g id="vp"></g></svg>
+    </div>
+    <div class="zoomctl">
+      <button data-z="in" aria-label="Zoom in">+</button>
+      <button data-z="out" aria-label="Zoom out">−</button>
+      <button data-z="reset" aria-label="Reset view">⤢</button>
+    </div>
+  </div>
+  <p class="maphint">drag to pan · scroll or pinch to zoom · zoom in for more stops · 🚆 train now</p>
+
+  <div class="sec-label">Explore live · satellite</div>
+  <p class="sub" style="margin:0 0 10px">High-resolution satellite and topographic imagery for zooming into any stretch of the leg. This view needs an internet connection. The map above stays fully offline. Tiles are Esri / Maxar &amp; USGS.</p>
+  <div id="live-map"></div>
+  <p class="dc-note" id="live-note">Pan and zoom freely; choose Satellite / Topographic / Streets at top-right.</p>
+
+  <div class="sec-label" id="tlLabel">The trip</div>
+  <div class="delayctl">
+    <div class="dc-row">
+      <span class="dc-lab">Train status</span>
+      <input type="range" id="delay" min="-30" max="360" step="5" value="0" aria-label="Current delay in minutes">
+      <span class="dc-val mono" id="delayVal">On schedule</span>
+      <button id="delayReset" class="iconbtn" type="button">Reset</button>
+    </div>
+    <div class="dc-row dc-anchor">
+      <span class="dc-lab">or set from a stop:</span>
+      <select id="anchorStop" aria-label="Stop you have passed"></select>
+      <span class="mono" style="color:var(--muted);font-size:12px">left at</span>
+      <input type="time" id="anchorTime" aria-label="Actual local time">
+      <button id="anchorSet" class="iconbtn" type="button">Apply</button>
+    </div>
+    <div class="dc-row">
+      <span class="dc-lab">Show train</span>
+      <label class="switch"><input type="checkbox" id="liveOn" checked> live now</label>
+      <span class="dc-live-note mono" id="liveStatus">—</span>
+    </div>
+    <div class="dc-row dc-scrub hidden" id="scrubRow">
+      <span class="dc-lab">Position</span>
+      <input type="range" id="scrub" min="0" max="52" step="0.05" value="0" aria-label="Hours into trip">
+      <span class="mono dc-val" id="scrubVal"></span>
+    </div>
+    <p class="dc-note">Manual and fully offline. Sliding the delay pushes every <b>schedule</b> time later: stops, scenery, coverage. Meal service and darkness keep to the <b>wall clock</b>, so they slide to <b>earlier</b> points on your route. Clock times are local at the train's own position and shift as you cross zones. The train marker reads your device clock when “live” is on; switch it off to scrub by hand.</p>
+  </div>
+  <div class="strip-outer">
+    <div class="sstars" id="sstars"></div>
+    <div class="meals" id="meals"></div>
+    <div class="strip" id="strip"></div>
+    <div class="axis" id="axis"></div>
+    <div class="tl-cap">
+      <span class="k" style="color:var(--scenic)"><svg width="15" height="10" viewBox="-7 -5 14 10" aria-hidden="true" style="vertical-align:-1px"><path d="M-6 0 C-3 -4 3 -4 6 0 C3 4 -3 4 -6 0 Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle r="1.7" fill="currentColor"/></svg>&nbsp;scenery highlight</span>
+      <span class="k"><span class="sw" style="background:var(--dine)"></span>dining-car meal window (train time)</span>
+    </div>
+  </div>
+
+  <div class="sec-label">Now happening · up next</div>
+  <div class="agenda">
+    <div class="ag">
+      <div class="ag-h"><span>Right now</span><span class="carrier" id="agCarrier"></span></div>
+      <div id="agNow"></div>
+    </div>
+    <div class="ag">
+      <div class="ag-h"><span>Up next</span></div>
+      <ul class="ag-list" id="agNext"></ul>
+    </div>
+    <div class="ag">
+      <div class="ag-h"><span>Do now · get ready</span></div>
+      <ul class="ag-tips" id="agTips"></ul>
+    </div>
+  </div>
+  <p class="dc-note">This follows the train position you set above, whether that is the live clock, the delay, or a manual scrub. The colored dot on each item says whether <b>cellular is likely</b> at that point: green usable, amber spotty, red none. Coverage and platform times are estimates. Dining and darkness keep to the wall clock; everything else slides with the delay.</p>
+
+  <div class="sec-label" id="cardsLabel">The stretches to plan around</div>
+  <div class="cards" id="cards"></div>
+
+  <div id="sightsWrap">
+    <div class="sec-label">What to watch for</div>
+    <p class="sub" style="margin-bottom:2px">Scenery on this leg, in order, with which way to look. Left and right are computed for the direction you are travelling. The glass-roofed <b style="color:var(--paper)">Sightseer Lounge</b>, where the train has one, sees both sides.</p>
+    <div id="sights"></div>
+  </div>
+
+  <div id="diningWrap"></div>
+
+  <footer>
+    <b>No onboard Wi-Fi</b> on most Amtrak long-distance trains, so cellular is your only link. Schedules, stops and track geometry come from <b>Amtrak's published GTFS feed</b>; times are the timetable, not live running. <b>Coverage here is modelled, not measured</b>: it is estimated from the population within reach of each point, the density of towns around it, and how tightly the track curves, which is a decent stand-in for the canyons and passes where signal dies. Three long tunnels are marked by hand. On the California Zephyr the model agrees with a hand-built, rider-reported map about three times in four, so treat it as a guide and check your own carrier's map for specifics. Carrier differences follow each network's known strengths: Verizon strongest across the rural West, T-Mobile weakest in remote mountains and desert. Darkness is computed from the real position of the sun at your position and date. State outlines are simplified. City data from GeoNames (CC BY 4.0); state boundaries from the US Census via us-atlas.
+  </footer>
+</div>
