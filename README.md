@@ -30,6 +30,9 @@ page keeps working with no signal at all, which is the point.
   south.
 - **Dining**, on the wall clock, so a late train meets each meal at an earlier
   point on its route.
+- **Which way to go**, priced in dark hours as well as travelling ones. Seattle
+  to New Orleans is 69 hours via Chicago or 106 via Los Angeles; on Verizon the
+  short way is also the connected one, and on T-Mobile it is not.
 
 ## How coverage is worked out
 
